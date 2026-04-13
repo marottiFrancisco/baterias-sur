@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baterias del Sur — Panel de control</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f3;
+    --bg-tertiary: #eeece6;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6b66;
+    --text-info: #185fa5;
+    --text-success: #3b6d11;
+    --text-warning: #854f0b;
+    --text-danger: #a32d2d;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1c1c1a;
+      --bg-secondary: #252523;
+      --bg-tertiary: #2e2e2b;
+      --bg-info: #0c2a47;
+      --bg-success: #122408;
+      --bg-warning: #2a1c04;
+      --bg-danger: #2a0c0c;
+      --text-primary: #e8e6de;
+      --text-secondary: #9c9a92;
+      --text-info: #85b7eb;
+      --text-success: #97c459;
+      --text-warning: #fac775;
+      --text-danger: #f09595;
+      --border: rgba(255,255,255,0.1);
+      --border-md: rgba(255,255,255,0.2);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); min-height: 100vh; }
+
+  /* TOPBAR */
+  .topbar { background: var(--bg-primary); border-bottom: 0.5px solid var(--border); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .topbar-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* NAV */
+  .nav { display: flex; gap: 2px; padding: 14px 20px 0; flex-wrap: wrap; }
+  .ntab { padding: 7px 13px; font-size: 12px; border-radius: 8px 8px 0 0; border: 0.5px solid transparent; background: transparent; color: var(--text-secondary); cursor: pointer; transition: all .15s; white-space: nowrap; font-family: var(--font); }
+  .ntab:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .ntab.active { background: var(--bg-primary); border-color: var(--border); border-bottom-color: var(--bg-primary); color: var(--text-primary); font-weight: 600; }
+
+  /* PANELS */
+  .panel { display: none; background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: 0 12px 12px 12px; margin: 0 20px 20px; }
+  .panel.active { display: block; }
+  .panel-body { padding: 18px; }
+
+  /* MODULE INFO BANNER */
+  .mod-info { background: var(--bg-secondary); border-bottom: 0.5px solid var(--border); padding: 14px 18px; display: flex; gap: 14px; align-items: flex-start; border-radius: 0 12px 0 0; }
+  .mod-icon { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .mod-body { flex: 1; }
+  .mod-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  .mod-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .mod-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+  .tag { font-size: 11px; padding: 2px 9px; border-radius: 999px; background: var(--bg-primary); border: 0.5px solid var(--border-md); color: var(--text-secondary); }
+
+  /* METRICS */
+  .mgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .mgrid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .met { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; }
+  .ml { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .mv { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+  .md { font-size: 11px; margin-top: 3px; }
+  .up { color: var(--text-success); }
+  .dn { color: var(--text-danger); }
+  .warn { color: var(--text-warning); }
+
+  /* LAYOUT */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .st { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+
+  /* BADGES */
+  .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; font-weight: 600; }
+  .bg  { background: #eaf3de; color: #3b6d11; }
+  .ba  { background: #faeeda; color: #854f0b; }
+  .br  { background: #fcebeb; color: #a32d2d; }
+  .bb  { background: #e6f1fb; color: #185fa5; }
+  .bgr { background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border); }
+  .bp  { background: #eeedfe; color: #3c3489; }
+  .bgold { background: #faeeda; color: #412402; border: 0.5px solid #ef9f27; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text-secondary); padding: 0 8px 10px 0; text-transform: uppercase; letter-spacing: .05em; }
+  td { padding: 8px 8px 8px 0; border-top: 0.5px solid var(--border); color: var(--text-primary); vertical-align: middle; }
+
+  /* BUTTONS */
+  .btn { background: var(--bg-info); color: var(--text-info); border: 0.5px solid var(--text-info); padding: 7px 14px; border-radius: var(--radius-md); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn-outline { background: transparent; color: var(--text-secondary); border: 0.5px solid var(--border-md); padding: 7px 14px; border-radius: var(--radius-md); font-size: 12px; cursor: pointer; font-family: var(--font); }
+
+  /* CARDS */
+  .card { background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 10px; }
+
+  /* ALERTS */
+  .arow { display: flex; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); align-items: flex-start; }
+  .arow:last-child { border-bottom: none; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dr { background: #e24b4a; } .da { background: #ef9f27; } .dg { background: #639922; }
+
+  /* PROGRESS */
+  .pbar { background: var(--bg-tertiary); border-radius: 4px; height: 5px; overflow: hidden; margin-top: 5px; }
+  .pbf  { height: 100%; border-radius: 4px; }
+
+  /* RECS */
+  .rec { border-left: 3px solid #1d9e75; border-radius: 0 8px 8px 0; background: var(--bg-secondary); padding: 10px 13px; margin-bottom: 8px; }
+  .rec.am { border-color: #ef9f27; }
+  .rec.rd { border-color: #e24b4a; }
+  .rec-t { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+  .rec-b { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* INPUTS */
+  input, select { background: var(--bg-secondary); border: 0.5px solid var(--border-md); border-radius: var(--radius-md); padding: 7px 10px; color: var(--text-primary); font-family: var(--font); font-size: 13px; outline: none; }
+  input:focus, select:focus { border-color: var(--text-info); }
+
+  /* CHART WRAP */
+  .chart-wrap { position: relative; height: 160px; }
+
+  /* PROV */
+  .prov-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 10px; }
+  .prov-stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+  .ps { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 8px 10px; }
+  .ps-l { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+  .ps-v { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
+
+  /* DROP ZONE */
+  .drop-zone { border: 1.5px dashed var(--border-md); border-radius: var(--radius-lg); padding: 28px; text-align: center; cursor: pointer; transition: background .15s; margin-bottom: 14px; }
+  .drop-zone:hover { background: var(--bg-secondary); }
+  .drop-zone.has-data { border-color: #1d9e75; background: #e1f5ee; }
+
+  /* WINNER */
+  .winner-badge { background: #eaf3de; color: #27500a; border: 0.5px solid #97c459; border-radius: var(--radius-md); padding: 9px 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+
+  /* ROI SLIDERS */
+  .slider-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .slider-wrap label { font-size: 13px; color: var(--text-secondary); min-width: 170px; }
+  .slider-wrap input[type=range] { flex: 1; accent-color: #1d9e75; }
+  .slider-wrap span { font-size: 13px; font-weight: 600; min-width: 80px; text-align: right; color: var(--text-primary); }
+  .roi-big { font-size: 36px; font-weight: 700; color: var(--text-success); margin: 8px 0; }
+  .roi-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .roi-row:last-child { border-bottom: none; }
+
+  /* ML */
+  .ml-header { background: #faeeda; border-radius: var(--radius-lg); padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .comp-row { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 13px; margin-bottom: 10px; }
+  .comp-stats { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+  .cs { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 7px 9px; }
+  .cs-l { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em; }
+  .cs-v { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
+
+  /* RADAR */
+  .radar-wrap { position: relative; height: 260px; margin-bottom: 10px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .mgrid { grid-template-columns: repeat(2, 1fr); }
+    .two { grid-template-columns: 1fr; }
+    .prov-stats { grid-template-columns: repeat(2, 1fr); }
+    .comp-stats { grid-template-columns: repeat(2, 1fr); }
+    .nav { padding: 10px 10px 0; }
+    .panel { margin: 0 10px 16px; }
+    .panel-body { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Baterias del Sur — Panel de control</div>
+    <div class="topbar-sub" id="fechaHoy"></div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="badge bg">Sistema activo</span>
+    <span style="font-size:12px;color:var(--text-secondary)">Usuario: Admin</span>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="ntab active" onclick="show('resumen',this)">Resumen</button>
+  <button class="ntab" onclick="show('stock',this)">Stock</button>
+  <button class="ntab" onclick="show('ventas',this)">Ventas</button>
+  <button class="ntab" onclick="show('cuentas',this)">Ctas. corrientes</button>
+  <button class="ntab" onclick="show('caja',this)">Caja</button>
+  <button class="ntab" onclick="show('proveedores',this)">Proveedores</button>
+  <button class="ntab" onclick="show('garantias',this)">Garantias</button>
+  <button class="ntab" onclick="show('clientes',this)">Clientes</button>
+  <button class="ntab" onclick="show('logistica',this)">Logistica</button>
+  <button class="ntab" onclick="show('reportes',this)">Reportes</button>
+  <button class="ntab" onclick="show('afip',this)">Facturacion AFIP</button>
+  <button class="ntab" onclick="show('meli',this)">Mercado Libre</button>
+  <button class="ntab" onclick="show('competencia',this)">Competencia ML</button>
+  <button class="ntab" onclick="show('roi',this)">ROI del sistema</button>
+</div>
+
+<!-- ═══════════════ RESUMEN ═══════════════ -->
+<div id="p-resumen" class="panel active">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#eaf3de">📊</div>
+    <div class="mod-body">
+      <div class="mod-title">Resumen general del negocio</div>
+      <div class="mod-desc">Esta es la pantalla principal que ven al arrancar el sistema. De un vistazo tienen todo lo importante del dia: ventas, alertas, stock critico y deudas. Ya no hace falta abrir varios Excel para saber como esta el negocio — toda la informacion clave esta en un solo lugar, actualizada en tiempo real.</div>
+      <div class="mod-tags"><span class="tag">Vista unificada</span><span class="tag">Alertas automaticas</span><span class="tag">Tiempo real</span><span class="tag">Sin Excel</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="mgrid">
+      <div class="met"><div class="ml">Ventas hoy</div><div class="mv">$184.500</div><div class="md up">+12% vs ayer</div></div>
+      <div class="met"><div class="ml">Unidades</div><div class="mv">23</div><div class="md up">+3 vs ayer</div></div>
+      <div class="met"><div class="ml">Stock critico</div><div class="mv dn">4</div><div class="md dn">a reponer</div></div>
+      <div class="met"><div class="ml">Deuda vencida</div><div class="mv warn">$67.200</div><div class="md dn">3 clientes</div></div>
+    </div>
+    <div class="mgrid">
+      <div class="met"><div class="ml">Garantias abiertas</div><div class="mv warn">3</div><div class="md">en proceso</div></div>
+      <div class="met"><div class="ml">Entregas pendientes</div><div class="mv">5</div><div class="md">para hoy y manana</div></div>
+      <div class="met"><div class="ml">Facturas AFIP pend.</div><div class="mv warn">2</div><div class="md dn">sin emitir</div></div>
+      <div class="met"><div class="ml">Diferencia proveed.</div><div class="mv dn">$23.400</div><div class="md dn">pagado de mas</div></div>
+    </div>
+    <div class="two">
+      <div>
+        <div class="st">Alertas del dia</div>
+        <div class="arow"><div class="dot dr"></div><div style="flex:1"><div style="font-size:13px">Bat. 12V 65Ah — stock critico (1 ud)</div><div style="font-size:11px;color:var(--text-secondary)">Minimo: 5 uds</div></div><span class="badge br">Urgente</span></div>
+        <div class="arow"><div class="dot dr"></div><div style="flex:1"><div style="font-size:13px">Garantia #G-018 — vence en 2 dias</div><div style="font-size:11px;color:var(--text-secondary)">Cliente: Taller Gomez</div></div><span class="badge br">Vence</span></div>
+        <div class="arow"><div class="dot da"></div><div style="flex:1"><div style="font-size:13px">Entrega #E-041 — sin asignar reparto</div><div style="font-size:11px;color:var(--text-secondary)">Flota Logistica · hoy</div></div><span class="badge ba">Pendiente</span></div>
+        <div class="arow"><div class="dot da"></div><div style="flex:1"><div style="font-size:13px">Factura pendiente — Autoparts SA $81.000</div><div style="font-size:11px;color:var(--text-secondary)">Sin emitir</div></div><span class="badge ba">AFIP</span></div>
+        <div class="arow"><div class="dot dg"></div><div style="flex:1"><div style="font-size:13px">Caja del dia cuadrada</div><div style="font-size:11px;color:var(--text-secondary)">Cierre: 18:00 hs</div></div><span class="badge bg">OK</span></div>
+      </div>
+      <div>
+        <div class="st">Ventas ultimos 7 dias</div>
+        <div class="chart-wrap"><canvas id="cVentas"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ STOCK ═══════════════ -->
+<div id="p-stock" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#e6f1fb">📦</div>
+    <div class="mod-body">
+      <div class="mod-title">Control de inventario en tiempo real</div>
+      <div class="mod-desc">Cada vez que se hace una venta, el stock se descuenta automaticamente — no hace falta que nadie lo actualice a mano. El sistema avisa cuando un producto llega al minimo configurado, antes de que se quede sin stock. Tambien registra cada ingreso de mercaderia con su costo real, lo que permite calcular el margen de ganancia exacto por producto.</div>
+      <div class="mod-tags"><span class="tag">Descuento automatico</span><span class="tag">Alertas de minimo</span><span class="tag">Costo y margen real</span><span class="tag">Sin conteo manual</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="display:flex;gap:8px">
+        <input placeholder="Buscar producto..." style="width:200px">
+        <select><option>Todas las categorias</option><option>12V alta cap.</option><option>12V estandar</option><option>Moto</option></select>
+      </div>
+      <button class="btn">+ Ingresar stock</button>
+    </div>
+    <table>
+      <tr><th>Codigo</th><th>Descripcion</th><th>Stock</th><th>Min.</th><th>Costo</th><th>Precio venta</th><th>Margen</th><th>Estado</th></tr>
+      <tr><td style="color:var(--text-secondary);font-size:11px">BAT-7565</td><td>Bateria 12V 75Ah</td><td><strong>18</strong></td><td>5</td><td>$28.000</td><td>$45.500</td><td class="up">+62%</td><td><span class="badge bg">Normal</span></td></tr>
+      <tr><td style="color:var(--text-secondary);font-size:11px">BAT-6565</td><td>Bateria 12V 65Ah</td><td><strong style="color:var(--text-danger)">1</strong></td><td>5</td><td>$22.000</td><td>$36.000</td><td class="up">+64%</td><td><span class="badge br">Critico</span></td></tr>
+      <tr><td style="color:var(--text-secondary);font-size:11px">BAT-4545</td><td>Bateria 12V 45Ah</td><td><strong style="color:var(--text-warning)">3</strong></td><td>5</td><td>$16.500</td><td>$27.000</td><td class="up">+64%</td><td><span class="badge ba">Bajo</span></td></tr>
+      <tr><td style="color:var(--text-secondary);font-size:11px">BAT-MOTO</td><td>Bateria 6V moto</td><td><strong>22</strong></td><td>8</td><td>$8.200</td><td>$13.500</td><td class="up">+65%</td><td><span class="badge bg">Normal</span></td></tr>
+      <tr><td style="color:var(--text-secondary);font-size:11px">BAT-9090</td><td>Bateria 12V 90Ah</td><td><strong>7</strong></td><td>3</td><td>$36.000</td><td>$58.000</td><td class="up">+61%</td><td><span class="badge bg">Normal</span></td></tr>
+      <tr><td style="color:var(--text-secondary);font-size:11px">BAT-GEL</td><td>Bateria gel 12V 55Ah</td><td><strong>5</strong></td><td>3</td><td>$41.000</td><td>$66.000</td><td class="up">+61%</td><td><span class="badge bg">Normal</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ VENTAS ═══════════════ -->
+<div id="p-ventas" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#eaf3de">💳</div>
+    <div class="mod-body">
+      <div class="mod-title">Registro de ventas con trazabilidad completa</div>
+      <div class="mod-desc">Cada venta queda registrada con hora, vendedor, producto, cantidad y forma de pago. Esto permite saber exactamente quien vendio que, cuando y a que precio. Si hay un descuento, queda registrado con quien lo autorizo. Las ventas de Mercado Libre entran automaticamente al mismo registro.</div>
+      <div class="mod-tags"><span class="tag">Trazabilidad total</span><span class="tag">Control por vendedor</span><span class="tag">Descuentos auditados</span><span class="tag">ML integrado</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="display:flex;gap:8px">
+        <select><option>Hoy</option><option>Esta semana</option><option>Este mes</option></select>
+        <select><option>Todos los vendedores</option><option>Carlos R.</option><option>Maria G.</option></select>
+      </div>
+      <button class="btn">+ Nueva venta</button>
+    </div>
+    <table>
+      <tr><th>Hora</th><th>Cliente</th><th>Producto</th><th>Cant</th><th>Total</th><th>Vendedor</th><th>Pago</th><th>Factura</th></tr>
+      <tr><td style="color:var(--text-secondary)">09:14</td><td>Taller Gomez</td><td>Bat. 12V 75Ah</td><td>2</td><td><strong>$91.000</strong></td><td>Carlos R.</td><td><span class="badge bg">Efectivo</span></td><td><span class="badge bg">Emitida</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">10:32</td><td>Mostrador</td><td>Bat. 12V 65Ah</td><td>1</td><td><strong>$36.000</strong></td><td>Maria G.</td><td><span class="badge bb">Transfer.</span></td><td><span class="badge bg">Emitida</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">11:05</td><td>Autoparts SA</td><td>Bat. 12V 45Ah</td><td>3</td><td><strong>$81.000</strong></td><td>Carlos R.</td><td><span class="badge ba">Cta. cte.</span></td><td><span class="badge br">Pendiente</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">14:40</td><td>Flota Logistica</td><td>Bat. 12V 90Ah</td><td>4</td><td><strong>$220.000</strong></td><td>Carlos R.</td><td><span class="badge ba">Cta. cte.</span></td><td><span class="badge br">Pendiente</span></td></tr>
+    </table>
+    <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:20px">
+      <span style="font-size:13px;color:var(--text-secondary)">Total del dia:</span>
+      <span style="font-size:16px;font-weight:600">$428.000</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CUENTAS CORRIENTES ═══════════════ -->
+<div id="p-cuentas" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#faeeda">📄</div>
+    <div class="mod-body">
+      <div class="mod-title">Cuentas corrientes con alertas de vencimiento</div>
+      <div class="mod-desc">Uno de los mayores focos de perdida en negocios que venden en cuenta corriente es no saber quien debe, cuanto y desde cuando. Este modulo muestra el saldo de cada cliente, su limite de credito y cuanto ya vencio. El sistema avisa automaticamente antes del vencimiento — no hace falta que nadie revise una planilla para acordarse de cobrar.</div>
+      <div class="mod-tags"><span class="tag">Alertas de vencimiento</span><span class="tag">Limite de credito</span><span class="tag">Historial de pagos</span><span class="tag">Recupero de deuda</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div style="display:flex;justify-content:space-between;margin-bottom:14px">
+      <span style="font-size:13px;color:var(--text-secondary)">3 activas — 2 con mora</span>
+      <button class="btn">+ Registrar pago</button>
+    </div>
+    <div style="padding:12px 0;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:14px;font-weight:600">Autoparts SA</div><div style="font-size:12px;color:var(--text-secondary)">Limite $200k — Usado 82%</div><div class="pbar"><div class="pbf" style="width:82%;background:#e24b4a"></div></div></div>
+      <div style="text-align:right"><div style="font-size:14px;font-weight:600;color:var(--text-danger)">$38.000 vencida</div><span class="badge br">18 dias</span></div>
+    </div>
+    <div style="padding:12px 0;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:14px;font-weight:600">Flota Logistica SRL</div><div style="font-size:12px;color:var(--text-secondary)">Limite $500k — Usado 88%</div><div class="pbar"><div class="pbf" style="width:88%;background:#ef9f27"></div></div></div>
+      <div style="text-align:right"><div style="font-size:14px;font-weight:600;color:var(--text-warning)">$29.200 por vencer</div><span class="badge ba">5 dias</span></div>
+    </div>
+    <div style="padding:12px 0;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:14px;font-weight:600">Taller Gomez</div><div style="font-size:12px;color:var(--text-secondary)">Limite $150k — Usado 61%</div><div class="pbar"><div class="pbf" style="width:61%;background:#639922"></div></div></div>
+      <div style="text-align:right"><div style="font-size:14px;font-weight:600">$91.000</div><span class="badge bg">Al dia</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CAJA ═══════════════ -->
+<div id="p-caja" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#e1f5ee">💵</div>
+    <div class="mod-body">
+      <div class="mod-title">Control de caja diaria por turno y vendedor</div>
+      <div class="mod-desc">El sistema registra cada movimiento de caja — ingresos, retiros, forma de pago — y genera el cierre automaticamente al final del dia. Si el efectivo contado no coincide con lo que dice el sistema, la diferencia aparece al instante. Ademas muestra cuanto vendio cada vendedor, lo que sirve para calcular comisiones o detectar irregularidades.</div>
+      <div class="mod-tags"><span class="tag">Cierre automatico</span><span class="tag">Por vendedor</span><span class="tag">Diferencias detectadas</span><span class="tag">Retiros registrados</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="two">
+      <div>
+        <div class="st">Resumen del dia</div>
+        <div class="mgrid2" style="margin-bottom:12px">
+          <div class="met"><div class="ml">Efectivo</div><div class="mv">$97.500</div></div>
+          <div class="met"><div class="ml">Transfer.</div><div class="mv">$36.000</div></div>
+          <div class="met"><div class="ml">Cta. cte.</div><div class="mv">$301.000</div></div>
+          <div class="met"><div class="ml">Saldo caja</div><div class="mv up">$57.500</div></div>
+        </div>
+        <div style="padding:12px;background:var(--bg-secondary);border-radius:var(--radius-md)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Apertura</span><span style="font-size:13px;font-weight:600">$10.000</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Ingresos efectivo</span><span style="font-size:13px;font-weight:600;color:var(--text-success)">+$97.500</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Retiro intermedio</span><span style="font-size:13px;font-weight:600;color:var(--text-danger)">-$50.000</span></div>
+          <div style="border-top:0.5px solid var(--border);padding-top:8px;margin-top:6px;display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">Saldo en caja</span><span style="font-size:15px;font-weight:600;color:var(--text-success)">$57.500</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="st">Por vendedor</div>
+        <div style="padding:10px 0;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between">
+          <div><div style="font-size:13px;font-weight:600">Carlos R.</div><div style="font-size:12px;color:var(--text-secondary)">14 ventas</div><div class="pbar" style="width:140px"><div class="pbf" style="width:70%;background:#1d9e75"></div></div></div>
+          <div style="text-align:right"><div style="font-size:14px;font-weight:600">$310.000</div><div style="font-size:11px;color:var(--text-secondary)">70%</div></div>
+        </div>
+        <div style="padding:10px 0;display:flex;justify-content:space-between">
+          <div><div style="font-size:13px;font-weight:600">Maria G.</div><div style="font-size:12px;color:var(--text-secondary)">9 ventas</div><div class="pbar" style="width:140px"><div class="pbf" style="width:30%;background:#7f77dd"></div></div></div>
+          <div style="text-align:right"><div style="font-size:14px;font-weight:600">$131.500</div><div style="font-size:11px;color:var(--text-secondary)">30%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PROVEEDORES ═══════════════ -->
+<div id="p-proveedores" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#eeedfe">🚛</div>
+    <div class="mod-body">
+      <div class="mod-title">Gestion de proveedores y control de precios acordados</div>
+      <div class="mod-desc">Cuando llega una factura de un proveedor, el sistema la compara automaticamente contra el precio que se habia acordado en la orden de compra. Si hay diferencia — aunque sea pequena — aparece como alerta. Es uno de los focos de perdida mas comunes y mas invisibles: el proveedor factura de mas y nadie lo detecta porque no hay con que comparar.</div>
+      <div class="mod-tags"><span class="tag">Comparacion automatica</span><span class="tag">Ordenes de compra</span><span class="tag">Diferencias detectadas</span><span class="tag">Historial de precios</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="mgrid">
+      <div class="met"><div class="ml">Proveedores activos</div><div class="mv">4</div></div>
+      <div class="met"><div class="ml">OC pendientes</div><div class="mv warn">3</div></div>
+      <div class="met"><div class="ml">Diferencia detectada</div><div class="mv dn">$23.400</div><div class="md dn">pagado de mas</div></div>
+      <div class="met"><div class="ml">Compras este mes</div><div class="mv">$412.000</div></div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div class="st">Comparador de cotizaciones — carga desde Excel o manual</div>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('xlsInput').click()">
+        <div id="dropMsg">
+          <div style="font-size:26px;margin-bottom:6px;color:var(--text-secondary)">↑</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Arrastra el Excel del proveedor aqui</div>
+          <div style="font-size:12px;color:var(--text-secondary)">o hace clic — formatos: .xlsx, .xls, .csv</div>
+        </div>
+        <div id="dropDone" style="display:none">
+          <div style="font-size:20px;color:#1d9e75;margin-bottom:4px">✓</div>
+          <div style="font-size:14px;font-weight:600;color:#0f6e56">Cargado: <span id="fileName"></span></div>
+        </div>
+      </div>
+      <input type="file" id="xlsInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="loadFile(this)">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:13px;color:var(--text-secondary)">O carga manual:</span>
+        <input id="prodNombre" placeholder="Producto" style="width:150px">
+        <input id="provNombre" placeholder="Proveedor" style="width:130px">
+        <input id="precio" placeholder="Precio unit." type="number" style="width:110px">
+        <input id="plazo" placeholder="Plazo entrega" style="width:110px">
+        <input id="cond" placeholder="Condicion pago" style="width:120px">
+        <button class="btn" onclick="agregarCotizacion()">Agregar</button>
+      </div>
+      <div id="cotizaciones"></div>
+      <div id="comparadorResult"></div>
+    </div>
+
+    <div class="st">Ordenes de compra activas</div>
+    <table>
+      <tr><th>OC #</th><th>Proveedor</th><th>Producto</th><th>Cant.</th><th>Precio acordado</th><th>Estado</th><th>Entrega est.</th></tr>
+      <tr><td style="color:var(--text-secondary)">#0044</td><td>DistribaBat</td><td>Bat. 12V 75Ah</td><td>20</td><td>$27.000</td><td><span class="badge ba">En camino</span></td><td>15/04</td></tr>
+      <tr><td style="color:var(--text-secondary)">#0043</td><td>DistribaBat</td><td>Bat. 12V 65Ah</td><td>15</td><td>$22.000</td><td><span class="badge bb">Confirmada</span></td><td>17/04</td></tr>
+      <tr><td style="color:var(--text-secondary)">#0042</td><td>BaterPro</td><td>Bat. 12V 45Ah</td><td>20</td><td>$16.500</td><td><span class="badge br">Sin respuesta</span></td><td>—</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ GARANTIAS ═══════════════ -->
+<div id="p-garantias" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#fcebeb">📋</div>
+    <div class="mod-body">
+      <div class="mod-title">Seguimiento de garantias y devoluciones</div>
+      <div class="mod-desc">Las baterias tienen garantia de 12 a 18 meses segun el modelo. Sin un sistema, es muy facil perder el control de cuales vencen, cuales ya se resolvieron y cuales hay que reclamarle al proveedor. Este modulo registra cada garantia con el motivo del reclamo, el estado y la fecha de vencimiento — y avisa antes de que expire para que no quede sin gestion.</div>
+      <div class="mod-tags"><span class="tag">Alertas de vencimiento</span><span class="tag">Reclamo al proveedor</span><span class="tag">Motivos frecuentes</span><span class="tag">Sin garantias perdidas</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="mgrid">
+      <div class="met"><div class="ml">Garantias activas</div><div class="mv">8</div></div>
+      <div class="met"><div class="ml">Vencen esta semana</div><div class="mv dn">3</div></div>
+      <div class="met"><div class="ml">Devoluciones mes</div><div class="mv">2</div></div>
+      <div class="met"><div class="ml">Tasa de garantia</div><div class="mv up">1.8%</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="st" style="margin-bottom:0">Garantias en curso</div>
+      <button class="btn">+ Registrar garantia</button>
+    </div>
+    <table style="margin-bottom:16px">
+      <tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Fecha venta</th><th>Vence</th><th>Motivo</th><th>Estado</th></tr>
+      <tr><td style="color:var(--text-secondary)">#G-018</td><td>Taller Gomez</td><td>Bat. 12V 75Ah</td><td>13/10/24</td><td style="color:var(--text-danger);font-weight:600">15/04/25</td><td>No carga</td><td><span class="badge br">Critica</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">#G-016</td><td>Autoparts SA</td><td>Bat. 12V 65Ah</td><td>20/10/24</td><td style="color:var(--text-warning);font-weight:600">20/04/25</td><td>Perdida de carga</td><td><span class="badge ba">En revision</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">#G-014</td><td>Mostrador</td><td>Bat. 6V moto</td><td>05/11/24</td><td>05/05/25</td><td>Corrosion bornes</td><td><span class="badge bb">Con proveedor</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">#G-011</td><td>Flota Logistica</td><td>Bat. 12V 90Ah</td><td>15/12/24</td><td>15/06/25</td><td>Sulfatacion</td><td><span class="badge bg">Resuelta</span></td></tr>
+    </table>
+    <div class="st">Motivos mas frecuentes (ultimo ano)</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+      <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;min-width:170px">No carga / descargada</span><div class="pbar" style="flex:1"><div class="pbf" style="width:42%;background:#e24b4a"></div></div><span style="font-size:12px;color:var(--text-secondary)">42%</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;min-width:170px">Perdida de carga</span><div class="pbar" style="flex:1"><div class="pbf" style="width:28%;background:#ef9f27"></div></div><span style="font-size:12px;color:var(--text-secondary)">28%</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;min-width:170px">Corrosion bornes</span><div class="pbar" style="flex:1"><div class="pbf" style="width:18%;background:#888780"></div></div><span style="font-size:12px;color:var(--text-secondary)">18%</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;min-width:170px">Otros</span><div class="pbar" style="flex:1"><div class="pbf" style="width:12%;background:#d3d1c7"></div></div><span style="font-size:12px;color:var(--text-secondary)">12%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CLIENTES ═══════════════ -->
+<div id="p-clientes" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#e6f1fb">👥</div>
+    <div class="mod-body">
+      <div class="mod-title">Ficha de clientes e historial de compras</div>
+      <div class="mod-desc">Con Excel no hay forma real de saber quienes son los mejores clientes, cuanto tiempo llevan sin comprar o que descuento tiene acordado cada uno. Este modulo guarda el historial completo de cada cliente — compras, pagos, garantias, descuentos habituales — y permite identificar rapidamente quienes son VIP y quienes se estan yendo a la competencia.</div>
+      <div class="mod-tags"><span class="tag">Historial completo</span><span class="tag">Clasificacion VIP</span><span class="tag">Descuentos por cliente</span><span class="tag">Clientes inactivos</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="mgrid">
+      <div class="met"><div class="ml">Clientes activos</div><div class="mv">47</div><div class="md up">+3 este mes</div></div>
+      <div class="met"><div class="ml">Clientes frecuentes</div><div class="mv">12</div></div>
+      <div class="met"><div class="ml">Ticket promedio</div><div class="mv">$68.400</div><div class="md up">+8% vs ant.</div></div>
+      <div class="met"><div class="ml">Retencion</div><div class="mv up">74%</div></div>
+    </div>
+    <div class="two">
+      <div>
+        <div class="st">Top clientes por facturacion</div>
+        <table>
+          <tr><th>Cliente</th><th>Tipo</th><th>Compras/mes</th><th>Total historico</th><th>Estado</th></tr>
+          <tr><td><strong>Flota Logistica SRL</strong></td><td><span class="badge bp">Empresa</span></td><td>4-6</td><td>$1.240.000</td><td><span class="badge bg">VIP</span></td></tr>
+          <tr><td><strong>Autoparts SA</strong></td><td><span class="badge bp">Empresa</span></td><td>3-5</td><td>$890.000</td><td><span class="badge bg">VIP</span></td></tr>
+          <tr><td>Taller Gomez</td><td><span class="badge bgr">Taller</span></td><td>2-3</td><td>$420.000</td><td><span class="badge bg">Activo</span></td></tr>
+          <tr><td>Taller Rodriguez</td><td><span class="badge bgr">Taller</span></td><td>1-2</td><td>$210.000</td><td><span class="badge bg">Activo</span></td></tr>
+          <tr><td>MotoShop Palermo</td><td><span class="badge bgr">Taller</span></td><td>0</td><td>$180.000</td><td><span class="badge ba">Inactivo 45 dias</span></td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="st">Detalle — Flota Logistica SRL</div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px">Flota Logistica SRL <span class="badge bg" style="margin-left:6px">VIP</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            <div><div style="font-size:11px;color:var(--text-secondary)">Ultima compra</div><div style="font-size:13px;font-weight:600">Hoy — $220.000</div></div>
+            <div><div style="font-size:11px;color:var(--text-secondary)">Descuento habitual</div><div style="font-size:13px;font-weight:600">5%</div></div>
+            <div><div style="font-size:11px;color:var(--text-secondary)">Cta. corriente</div><div style="font-size:13px;font-weight:600">$440.000</div></div>
+            <div><div style="font-size:11px;color:var(--text-secondary)">Garantias activas</div><div style="font-size:13px;font-weight:600">1</div></div>
+          </div>
+          <div class="st">Ultimas compras</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:2.2">
+            13/04 — 4x Bat. 12V 90Ah — $220.000<br>
+            01/04 — 6x Bat. 12V 75Ah — $273.000<br>
+            15/03 — 2x Bat. 12V 65Ah — $72.000
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ LOGISTICA ═══════════════ -->
+<div id="p-logistica" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#e1f5ee">🚗</div>
+    <div class="mod-body">
+      <div class="mod-title">Programacion y seguimiento de entregas a domicilio</div>
+      <div class="mod-desc">Si el negocio hace entregas, sin un sistema es dificil saber que salio, cuando, con quien y si llego. Este modulo registra cada entrega con la direccion, el horario comprometido y el repartidor asignado. El estado se actualiza en tiempo real — el dueno puede ver desde el panel si la entrega se completo o si todavia esta en camino, sin tener que llamar a nadie.</div>
+      <div class="mod-tags"><span class="tag">Estado en tiempo real</span><span class="tag">Asignacion de repartidor</span><span class="tag">Horarios comprometidos</span><span class="tag">Sin llamados para saber</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="mgrid">
+      <div class="met"><div class="ml">Entregas hoy</div><div class="mv">3</div></div>
+      <div class="met"><div class="ml">Pendientes asignar</div><div class="mv warn">2</div></div>
+      <div class="met"><div class="ml">En camino</div><div class="mv" style="color:var(--text-info)">1</div></div>
+      <div class="met"><div class="ml">Este mes</div><div class="mv">38</div><div class="md up">+5 vs ant.</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="st" style="margin-bottom:0">Entregas de hoy</div>
+      <button class="btn">+ Programar entrega</button>
+    </div>
+    <table style="margin-bottom:16px">
+      <tr><th>ID</th><th>Cliente</th><th>Productos</th><th>Direccion</th><th>Horario</th><th>Repartidor</th><th>Estado</th></tr>
+      <tr><td style="color:var(--text-secondary)">#E-039</td><td>Taller Gomez</td><td>2x Bat. 75Ah</td><td style="font-size:12px">Av. Corrientes 1420</td><td>09:00-11:00</td><td>Marcos V.</td><td><span class="badge bg">Entregado</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">#E-040</td><td>Autoparts SA</td><td>3x Bat. 45Ah</td><td style="font-size:12px">Rodriguez Pena 850</td><td>11:00-13:00</td><td>Marcos V.</td><td><span class="badge bb">En camino</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">#E-041</td><td>Flota Logistica</td><td>4x Bat. 90Ah</td><td style="font-size:12px">Av. San Martin 2800</td><td>15:00-17:00</td><td style="color:var(--text-danger)">Sin asignar</td><td><span class="badge br">Pendiente</span></td></tr>
+      <tr><td style="color:var(--text-secondary)">#E-042</td><td>MotoShop Palermo</td><td>2x Bat. 6V moto</td><td style="font-size:12px">Thames 1630</td><td>17:00-19:00</td><td style="color:var(--text-danger)">Sin asignar</td><td><span class="badge br">Pendiente</span></td></tr>
+    </table>
+    <div class="st">Repartidores disponibles hoy</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="card" style="flex:1;min-width:180px"><div style="font-size:13px;font-weight:600">Marcos V.</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px">2 entregas completadas</div><div style="margin-top:8px"><span class="badge ba">En ruta hasta 14:00</span></div></div>
+      <div class="card" style="flex:1;min-width:180px"><div style="font-size:13px;font-weight:600">Diego P.</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px">0 entregas hoy</div><div style="margin-top:8px"><span class="badge bg">Disponible</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ REPORTES ═══════════════ -->
+<div id="p-reportes" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#eeedfe">📈</div>
+    <div class="mod-body">
+      <div class="mod-title">Reportes de rentabilidad y evolucion del negocio</div>
+      <div class="mod-desc">Este modulo responde la pregunta que mas le importa al dueno: "cuanto gane realmente?". No cuanto facture, sino cuanto gane descontando el costo de la mercaderia. Muestra la rentabilidad por producto — para saber cuales conviene vender mas — y la evolucion mes a mes para detectar si el negocio esta creciendo o achicandose, y por que canal viene cada venta.</div>
+      <div class="mod-tags"><span class="tag">Ganancia real</span><span class="tag">Por producto</span><span class="tag">Evolucion mensual</span><span class="tag">Canal de ventas</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="mgrid">
+      <div class="met"><div class="ml">Facturacion mensual</div><div class="mv">$3.240.000</div><div class="md up">+18%</div></div>
+      <div class="met"><div class="ml">Ganancia bruta</div><div class="mv up">$1.882.000</div><div class="md">Margen 58%</div></div>
+      <div class="met"><div class="ml">Costo de mercancias</div><div class="mv">$1.358.000</div></div>
+      <div class="met"><div class="ml">Mejor producto</div><div class="mv" style="font-size:14px">Bat. 12V 75Ah</div><div class="md up">$378k ganancia</div></div>
+    </div>
+    <div class="two">
+      <div>
+        <div class="st">Rentabilidad por producto</div>
+        <table>
+          <tr><th>Producto</th><th>Ventas</th><th>Ganancia</th><th>Margen</th></tr>
+          <tr><td>Bat. 12V 75Ah</td><td>$980.000</td><td style="color:var(--text-success)">$378.000</td><td class="up">+63%</td></tr>
+          <tr><td>Bat. 12V 65Ah</td><td>$612.000</td><td style="color:var(--text-success)">$238.000</td><td class="up">+64%</td></tr>
+          <tr><td>Bat. 12V 45Ah</td><td>$432.000</td><td style="color:var(--text-success)">$168.000</td><td class="up">+64%</td></tr>
+          <tr><td>Bat. 12V 90Ah</td><td>$812.000</td><td style="color:var(--text-success)">$308.000</td><td class="up">+61%</td></tr>
+          <tr><td>Bat. 6V moto</td><td>$404.000</td><td style="color:var(--text-success)">$158.000</td><td class="up">+64%</td></tr>
+        </table>
+        <div style="margin-top:16px"><div class="st">Fuente de ventas</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;min-width:120px">Mostrador</span><div class="pbar" style="flex:1"><div class="pbf" style="width:52%;background:#1d9e75"></div></div><span style="font-size:12px;color:var(--text-secondary)">52%</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;min-width:120px">Cta. corriente</span><div class="pbar" style="flex:1"><div class="pbf" style="width:33%;background:#7f77dd"></div></div><span style="font-size:12px;color:var(--text-secondary)">33%</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;min-width:120px">Mercado Libre</span><div class="pbar" style="flex:1"><div class="pbf" style="width:15%;background:#ef9f27"></div></div><span style="font-size:12px;color:var(--text-secondary)">15%</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="st">Evolucion ultimos 6 meses</div>
+        <div class="chart-wrap"><canvas id="cReportes"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ AFIP ═══════════════ -->
+<div id="p-afip" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#faeeda">🧾</div>
+    <div class="mod-body">
+      <div class="mod-title">Facturacion electronica — integracion directa con AFIP</div>
+      <div class="mod-desc">El sistema emite facturas A, B y C directamente desde el panel sin entrar al portal de AFIP. Cada venta puede generar el comprobante automaticamente al momento de cobrar, o en lote al cierre del dia. Queda el historial de todos los comprobantes emitidos, con CUIT del cliente, IVA discriminado y estado. Compatible con Monotributo y Responsable Inscripto. Elimina el doble trabajo de cargar la venta y despues ir a facturar aparte.</div>
+      <div class="mod-tags"><span class="tag">Factura A, B y C</span><span class="tag">Web service AFIP</span><span class="tag">Automatica o en lote</span><span class="tag">Monotributo y RI</span><span class="tag">Sin doble carga</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="mgrid">
+      <div class="met"><div class="ml">Emitidas hoy</div><div class="mv">2</div></div>
+      <div class="met"><div class="ml">Pendientes</div><div class="mv warn">2</div><div class="md dn">sin emitir</div></div>
+      <div class="met"><div class="ml">Facturado este mes</div><div class="mv">$3.240.000</div></div>
+      <div class="met"><div class="ml">IVA debito fiscal</div><div class="mv">$681.176</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="st" style="margin-bottom:0">Comprobantes del dia</div>
+      <button class="btn">+ Emitir comprobante</button>
+    </div>
+    <table>
+      <tr><th>Comprobante</th><th>Tipo</th><th>Cliente</th><th>CUIT</th><th>Neto</th><th>IVA</th><th>Total</th><th>Estado</th></tr>
+      <tr><td style="font-size:11px;color:var(--text-secondary)">FA-00003-00001241</td><td><span class="badge bg">Fact. A</span></td><td>Taller Gomez</td><td style="font-size:11px">20-28441322-4</td><td>$75.206</td><td>$15.793</td><td><strong>$91.000</strong></td><td><span class="badge bg">Emitida</span></td></tr>
+      <tr><td style="font-size:11px;color:var(--text-secondary)">FB-00003-00000892</td><td><span class="badge bb">Fact. B</span></td><td>Consumidor Final</td><td style="font-size:11px">—</td><td>$29.752</td><td>$6.248</td><td><strong>$36.000</strong></td><td><span class="badge bg">Emitida</span></td></tr>
+      <tr style="background:var(--bg-secondary)"><td style="font-size:11px;color:var(--text-secondary)">Pendiente</td><td><span class="badge bg">Fact. A</span></td><td>Autoparts SA</td><td style="font-size:11px">30-71234567-0</td><td>$66.942</td><td>$14.058</td><td><strong>$81.000</strong></td><td><span class="badge br">Pendiente</span></td></tr>
+      <tr style="background:var(--bg-secondary)"><td style="font-size:11px;color:var(--text-secondary)">Pendiente</td><td><span class="badge bg">Fact. A</span></td><td>Flota Logistica</td><td style="font-size:11px">30-68912345-1</td><td>$181.818</td><td>$38.182</td><td><strong>$220.000</strong></td><td><span class="badge br">Pendiente</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ MERCADO LIBRE ═══════════════ -->
+<div id="p-meli" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#faeeda">🛒</div>
+    <div class="mod-body">
+      <div class="mod-title">Integracion con Mercado Libre — stock, precios y ventas</div>
+      <div class="mod-desc">Si el negocio vende en Mercado Libre, este modulo sincroniza el stock automaticamente: cuando se vende una bateria en el mostrador, ML se actualiza solo. Compara el precio propio contra el promedio del mercado y avisa cuando se esta vendiendo por debajo de lo que podria cobrarse. Las ventas de ML entran al registro general como cualquier otra venta.</div>
+      <div class="mod-tags"><span class="tag">Stock sincronizado</span><span class="tag">Comparacion de precios</span><span class="tag">Ventas integradas</span><span class="tag">Alertas de precio</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="ml-header">
+      <div><div style="font-size:14px;font-weight:600;color:#412402">Cuenta conectada · MercadoLider Gold · 4.8★</div><div style="font-size:12px;color:#854f0b;margin-top:2px">Sincronizacion automatica activa</div></div>
+      <div style="display:flex;gap:20px">
+        <div style="text-align:center"><div style="font-size:17px;font-weight:600;color:#633806">8</div><div style="font-size:11px;color:#854f0b">publicaciones</div></div>
+        <div style="text-align:center"><div style="font-size:17px;font-weight:600;color:#633806">$312.000</div><div style="font-size:11px;color:#854f0b">ventas/mes</div></div>
+        <div style="text-align:center"><div style="font-size:17px;font-weight:600;color:#633806">4.8★</div><div style="font-size:11px;color:#854f0b">reputacion</div></div>
+      </div>
+    </div>
+    <table>
+      <tr><th>Producto</th><th>Tu precio ML</th><th>Precio mercado</th><th>Margen neto</th><th>Ventas/mes</th><th>Posicion</th><th>Estado</th></tr>
+      <tr><td>Bat. 12V 75Ah</td><td style="color:var(--text-danger)">$43.000</td><td>$47.200</td><td class="warn">35%</td><td>12</td><td>#3</td><td><span class="badge br">Precio bajo</span></td></tr>
+      <tr><td>Bat. 12V 65Ah</td><td class="up">$35.500</td><td>$34.800</td><td class="up">38%</td><td>8</td><td>#2</td><td><span class="badge bg">OK</span></td></tr>
+      <tr><td>Bat. 12V 45Ah</td><td class="up">$26.500</td><td>$25.900</td><td class="up">42%</td><td>6</td><td>#4</td><td><span class="badge bg">OK</span></td></tr>
+      <tr><td>Bat. 6V moto</td><td class="warn">$13.500</td><td>$13.800</td><td class="up">40%</td><td>9</td><td>#5</td><td><span class="badge ba">Subir precio</span></td></tr>
+    </table>
+    <div style="margin-top:14px;padding:13px;background:var(--bg-secondary);border-radius:var(--radius-lg)">
+      <div class="st">Sincronizacion automatica — que hace el sistema</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+        <div style="font-size:13px;color:var(--text-secondary)">✓ Stock se descuenta en ML al vender por mostrador</div>
+        <div style="font-size:13px;color:var(--text-secondary)">✓ Pausado automatico si stock llega a 0</div>
+        <div style="font-size:13px;color:var(--text-secondary)">✓ Alerta si competencia baja precio mas de 5%</div>
+        <div style="font-size:13px;color:var(--text-secondary)">✓ Ventas de ML entran al registro de ventas</div>
+        <div style="font-size:13px;color:var(--text-secondary)">✓ Comparacion de precios diaria automatica</div>
+        <div style="font-size:13px;color:var(--text-secondary)">✓ Reputacion y reclamos visibles desde el panel</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ COMPETENCIA ML ═══════════════ -->
+<div id="p-competencia" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#faeeda">🎯</div>
+    <div class="mod-body">
+      <div class="mod-title">Radar de competencia en Mercado Libre</div>
+      <div class="mod-desc">Muestra como esta posicionado el negocio frente a los demas vendedores de la categoria. Compara precios, reputacion, velocidad de venta y condiciones de envio. Detecta automaticamente cuando un competidor baja el precio o gana terreno, y sugiere el precio optimo para mantenerse competitivo sin resignar margen innecesariamente.</div>
+      <div class="mod-tags"><span class="tag">Ranking de vendedores</span><span class="tag">Precio optimo sugerido</span><span class="tag">Alertas de competencia</span><span class="tag">Simulador de impacto</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="mgrid">
+      <div class="met"><div class="ml">Competidores detectados</div><div class="mv">23</div></div>
+      <div class="met"><div class="ml">Tu posicion</div><div class="mv">#3</div><div class="md">de 23 vendedores</div></div>
+      <div class="met"><div class="ml">Precio promedio mercado</div><div class="mv">$47.200</div><div class="md">Bat. 12V 75Ah</div></div>
+      <div class="met"><div class="ml">Oportunidad detectada</div><div class="mv up">+$42.000</div><div class="md up">por mes ajustando precio</div></div>
+    </div>
+    <div class="st">Ranking — Bat. 12V 75Ah</div>
+    <table style="margin-bottom:16px">
+      <tr><th>Pos.</th><th>Vendedor</th><th>Precio</th><th>Envio gratis</th><th>Reputacion</th><th>vs vos</th></tr>
+      <tr style="background:var(--bg-secondary)"><td><span class="badge bgold">#1</span></td><td><strong>BaterCenter</strong></td><td>$45.900</td><td><span class="badge bg">Si</span></td><td>4.9 ★</td><td style="color:var(--text-danger)">+$2.900 mas caro</td></tr>
+      <tr style="background:var(--bg-secondary)"><td><span class="badge bgr">#2</span></td><td><strong>DistribElec</strong></td><td>$44.500</td><td><span class="badge bg">Si</span></td><td>4.8 ★</td><td style="color:var(--text-danger)">+$1.500 mas caro</td></tr>
+      <tr style="background:#e6f1fb"><td><span class="badge bb">#3 Vos</span></td><td><strong>Baterias del Sur</strong></td><td style="color:var(--text-danger)">$43.000</td><td><span class="badge ba">No</span></td><td>4.8 ★</td><td style="color:var(--text-secondary)">—</td></tr>
+      <tr><td><span class="badge bgr">#4</span></td><td>AutoBat Online</td><td>$46.200</td><td><span class="badge ba">No</span></td><td>4.5 ★</td><td style="color:var(--text-success)">+$3.200 mas caro</td></tr>
+      <tr><td><span class="badge bgr">#5</span></td><td>MegaStock AR</td><td>$48.000</td><td><span class="badge bg">Si</span></td><td>4.4 ★</td><td style="color:var(--text-success)">+$5.000 mas caro</td></tr>
+    </table>
+    <div class="st">Simulador de impacto — ajuste de precio</div>
+    <div class="card">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label style="font-size:13px;color:var(--text-secondary)">Nuevo precio:</label>
+          <input type="range" id="simPrecio" min="41000" max="52000" step="500" value="46500" style="width:150px;accent-color:#1d9e75" oninput="simular()">
+          <span id="simPOut" style="font-size:13px;font-weight:600;min-width:70px">$46.500</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <label style="font-size:13px;color:var(--text-secondary)">Ventas/mes actuales:</label>
+          <input type="range" id="simVentas" min="5" max="60" step="1" value="12" style="width:100px;accent-color:#1d9e75" oninput="simular()">
+          <span id="simVOut" style="font-size:13px;font-weight:600;min-width:30px">12</span>
+        </div>
+      </div>
+      <div class="mgrid">
+        <div class="met"><div class="ml">Ingreso actual/mes</div><div class="mv" id="simActual">$516.000</div></div>
+        <div class="met"><div class="ml">Ingreso nuevo/mes</div><div class="mv up" id="simNuevo">$558.000</div></div>
+        <div class="met"><div class="ml">Diferencia mensual</div><div class="mv up" id="simDif">+$42.000</div></div>
+        <div class="met"><div class="ml">Diferencia anual</div><div class="mv up" id="simAnual">+$504.000</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ROI ═══════════════ -->
+<div id="p-roi" class="panel">
+  <div class="mod-info">
+    <div class="mod-icon" style="background:#eaf3de">💡</div>
+    <div class="mod-body">
+      <div class="mod-title">Retorno de inversion del sistema</div>
+      <div class="mod-desc">Esta herramienta permite calcular cuanto dinero recuperaria el negocio si implementara el sistema, en base a sus propios numeros. Mover los sliders con los datos reales del negocio y ver en tiempo real la ganancia neta mensual, el payback y el ROI anual. Es la forma mas concreta de justificar la inversion.</div>
+      <div class="mod-tags"><span class="tag">Calculo personalizado</span><span class="tag">Payback en meses</span><span class="tag">ROI anual</span><span class="tag">Con datos reales</span></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="two">
+      <div>
+        <div class="st">Parametros del negocio</div>
+        <div class="slider-wrap"><label>Ventas mensuales ($)</label><input type="range" id="sVentas" min="500000" max="5000000" step="50000" value="1800000" oninput="calcROI()"><span id="oVentas">$1.800.000</span></div>
+        <div class="slider-wrap"><label>Margen promedio (%)</label><input type="range" id="sMargen" min="20" max="80" step="1" value="63" oninput="calcROI()"><span id="oMargen">63%</span></div>
+        <div class="slider-wrap"><label>Perdida estimada (%)</label><input type="range" id="sPerdida" min="1" max="20" step="1" value="8" oninput="calcROI()"><span id="oPerdida">8%</span></div>
+        <div class="slider-wrap"><label>Costo del sistema ($/mes)</label><input type="range" id="sSistema" min="20000" max="200000" step="5000" value="60000" oninput="calcROI()"><span id="oSistema">$60.000</span></div>
+        <div class="slider-wrap"><label>Recupero esperado (%)</label><input type="range" id="sRecupero" min="30" max="90" step="5" value="65" oninput="calcROI()"><span id="oRecupero">65%</span></div>
+      </div>
+      <div>
+        <div class="st">Resultado proyectado</div>
+        <div class="card">
+          <div style="font-size:13px;color:var(--text-secondary)">Recupero mensual estimado</div>
+          <div class="roi-big" id="roiRecupero">$93.600</div>
+          <div style="font-size:12px;color:var(--text-secondary)">vs costo del sistema de <span id="roiCosto">$60.000</span>/mes</div>
+        </div>
+        <div class="card">
+          <div class="roi-row"><span>Perdida actual estimada/mes</span><span id="r1" style="font-weight:600;color:var(--text-danger)">$144.000</span></div>
+          <div class="roi-row"><span>Recupero con sistema</span><span id="r2" style="font-weight:600;color:var(--text-success)">$93.600</span></div>
+          <div class="roi-row"><span>Costo del sistema</span><span id="r3" style="font-weight:600">$60.000</span></div>
+          <div class="roi-row"><span style="font-weight:600">Ganancia neta mensual</span><span id="r4" style="font-weight:600;font-size:15px;color:var(--text-success)">+$33.600</span></div>
+        </div>
+        <div class="card">
+          <div class="roi-row"><span>Payback (meses para recuperar)</span><span id="r5" style="font-weight:600">1.8 meses</span></div>
+          <div class="roi-row"><span>ROI anual sobre inversion</span><span id="r6" style="font-weight:600;color:var(--text-success)">+56%</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary)">Estimaciones conservadoras. Los valores reales dependen del diagnostico especifico del negocio.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fecha actual
+  const dias = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const hoy = new Date();
+  document.getElementById('fechaHoy').textContent = `${dias[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]} ${hoy.getFullYear()}`;
+
+  // Panel navigation
+  function show(id, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.ntab').forEach(b => b.classList.remove('active'));
+    document.getElementById('p-' + id).classList.add('active');
+    btn.classList.add('active');
+    if (id === 'resumen') drawVentas();
+    if (id === 'reportes') drawReportes();
+    if (id === 'roi') calcROI();
+  }
+
+  // Charts
+  const charts = {};
+  function getChartDefaults() {
+    const dark = matchMedia('(prefers-color-scheme:dark)').matches;
+    return {
+      tc: dark ? '#c2c0b6' : '#888780',
+      gc: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
+    };
+  }
+
+  function drawVentas() {
+    const c = document.getElementById('cVentas');
+    if (!c || charts.ventas) return;
+    const { tc, gc } = getChartDefaults();
+    charts.ventas = new Chart(c, {
+      type: 'bar',
+      data: {
+        labels: ['Lun','Mar','Mie','Jue','Vie','Sab','Hoy'],
+        datasets: [{ data: [142000,98000,215000,176000,310000,88000,184500], backgroundColor: ['#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#1D9E75'], borderRadius: 4, borderSkipped: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + Math.round(ctx.raw).toLocaleString('es-AR') } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: tc, font: { size: 11 } } },
+          y: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => '$' + Math.round(v/1000) + 'k' } }
+        }
+      }
+    });
+  }
+
+  function drawReportes() {
+    const c = document.getElementById('cReportes');
+    if (!c || charts.reportes) return;
+    const { tc, gc } = getChartDefaults();
+    charts.reportes = new Chart(c, {
+      type: 'line',
+      data: {
+        labels: ['Nov','Dic','Ene','Feb','Mar','Abr'],
+        datasets: [
+          { label: 'Ventas', data: [2100000,2650000,1980000,2430000,2750000,3240000], borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.08)', borderWidth: 1.5, tension: .4, pointRadius: 3, pointBackgroundColor: '#1D9E75' },
+          { label: 'Ganancia', data: [1220000,1540000,1148000,1409000,1595000,1882000], borderColor: '#7F77DD', backgroundColor: 'rgba(127,119,221,0.08)', borderWidth: 1.5, tension: .4, pointRadius: 3, pointBackgroundColor: '#7F77DD' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: tc, font: { size: 11 }, boxWidth: 10, padding: 8 } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: tc, font: { size: 11 } } },
+          y: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => '$' + Math.round(v/1000) + 'k' } }
+        }
+      }
+    });
+  }
+
+  // ROI Calculator
+  function calcROI() {
+    const ventas   = +document.getElementById('sVentas').value;
+    const perdPct  = +document.getElementById('sPerdida').value / 100;
+    const recPct   = +document.getElementById('sRecupero').value / 100;
+    const costo    = +document.getElementById('sSistema').value;
+    const margen   = +document.getElementById('sMargen').value;
+    document.getElementById('oVentas').textContent  = '$' + Math.round(ventas).toLocaleString('es-AR');
+    document.getElementById('oMargen').textContent  = margen + '%';
+    document.getElementById('oPerdida').textContent = (+document.getElementById('sPerdida').value) + '%';
+    document.getElementById('oSistema').textContent = '$' + Math.round(costo).toLocaleString('es-AR');
+    document.getElementById('oRecupero').textContent= Math.round(recPct * 100) + '%';
+    const perdida  = Math.round(ventas * perdPct);
+    const recupero = Math.round(perdida * recPct);
+    const neta     = recupero - costo;
+    const payback  = costo > 0 ? (costo / Math.max(neta, 1)).toFixed(1) : '-';
+    const roiAnual = costo > 0 ? Math.round((neta * 12 / (costo * 12)) * 100) : 0;
+    document.getElementById('roiRecupero').textContent = '$' + recupero.toLocaleString('es-AR');
+    document.getElementById('roiCosto').textContent    = '$' + Math.round(costo).toLocaleString('es-AR');
+    document.getElementById('r1').textContent = '$' + perdida.toLocaleString('es-AR');
+    document.getElementById('r2').textContent = '$' + recupero.toLocaleString('es-AR');
+    document.getElementById('r3').textContent = '$' + Math.round(costo).toLocaleString('es-AR');
+    document.getElementById('r4').textContent = (neta >= 0 ? '+' : '') + '$' + neta.toLocaleString('es-AR');
+    document.getElementById('r4').style.color = neta >= 0 ? 'var(--text-success)' : 'var(--text-danger)';
+    document.getElementById('r5').textContent = payback + ' meses';
+    document.getElementById('r6').textContent = (roiAnual >= 0 ? '+' : '') + roiAnual + '%';
+    document.getElementById('r6').style.color = roiAnual >= 0 ? 'var(--text-success)' : 'var(--text-danger)';
+  }
+
+  // Simulador competencia ML
+  function simular() {
+    const precioNuevo = +document.getElementById('simPrecio').value;
+    const ventas      = +document.getElementById('simVentas').value;
+    const precioActual = 43000;
+    document.getElementById('simPOut').textContent = '$' + Math.round(precioNuevo).toLocaleString('es-AR');
+    document.getElementById('simVOut').textContent = ventas;
+    const actual = precioActual * ventas;
+    const nuevo  = precioNuevo * ventas;
+    const dif    = nuevo - actual;
+    document.getElementById('simActual').textContent = '$' + Math.round(actual).toLocaleString('es-AR');
+    document.getElementById('simNuevo').textContent  = '$' + Math.round(nuevo).toLocaleString('es-AR');
+    document.getElementById('simDif').textContent    = (dif >= 0 ? '+' : '') + '$' + Math.round(dif).toLocaleString('es-AR');
+    document.getElementById('simDif').style.color    = dif >= 0 ? 'var(--text-success)' : 'var(--text-danger)';
+    document.getElementById('simAnual').textContent  = (dif >= 0 ? '+' : '') + '$' + Math.round(dif * 12).toLocaleString('es-AR');
+    document.getElementById('simAnual').style.color  = dif >= 0 ? 'var(--text-success)' : 'var(--text-danger)';
+  }
+
+  // Comparador proveedores
+  let cotizaciones = [
+    { producto: 'Bat. 12V 75Ah', proveedor: 'DistribaBat', precio: 28200, plazo: '3-5 dias', condicion: '30 dias' },
+    { producto: 'Bat. 12V 75Ah', proveedor: 'BaterPro',    precio: 27500, plazo: '5-7 dias', condicion: '15 dias' },
+    { producto: 'Bat. 12V 75Ah', proveedor: 'GelPower',    precio: 29000, plazo: '10 dias',  condicion: 'Contado' },
+    { producto: 'Bat. 12V 65Ah', proveedor: 'DistribaBat', precio: 22400, plazo: '3-5 dias', condicion: '30 dias' },
+    { producto: 'Bat. 12V 65Ah', proveedor: 'BaterPro',    precio: 21800, plazo: '5-7 dias', condicion: '15 dias' },
+  ];
+
+  function renderCotizaciones() {
+    const productos = [...new Set(cotizaciones.map(c => c.producto))];
+    let html = '';
+    productos.forEach(prod => {
+      const filas = cotizaciones.filter(c => c.producto === prod);
+      const minPrecio = Math.min(...filas.map(f => f.precio));
+      const winner = filas.find(f => f.precio === minPrecio);
+      html += `<div style="margin-bottom:18px">
+        <div class="winner-badge">
+          <span style="font-size:18px">★</span>
+          <div>
+            <div style="font-size:13px;font-weight:600">${prod} — Mejor opcion: ${winner.proveedor}</div>
+            <div style="font-size:12px;color:#3b6d11">Precio mas bajo: $${minPrecio.toLocaleString('es-AR')} · ${winner.condicion} · ${winner.plazo}</div>
+          </div>
+        </div>
+        <table>
+          <tr><th>Proveedor</th><th>Precio unit.</th><th>Plazo entrega</th><th>Condicion pago</th><th>vs mejor</th></tr>`;
+      filas.sort((a,b) => a.precio - b.precio).forEach(f => {
+        const diff = f.precio - minPrecio;
+        const isBest = diff === 0;
+        html += `<tr>
+          <td style="font-weight:${isBest ? '600' : '400'}">${f.proveedor}${isBest ? ' ★' : ''}</td>
+          <td style="color:${isBest ? 'var(--text-success)' : 'var(--text-danger)'}">$${f.precio.toLocaleString('es-AR')}</td>
+          <td>${f.plazo}</td>
+          <td>${f.condicion}</td>
+          <td style="color:${isBest ? 'var(--text-success)' : 'var(--text-danger)'}">${isBest ? '—' : '+$' + diff.toLocaleString('es-AR')}</td>
+        </tr>`;
+      });
+      html += `</table></div>`;
+    });
+    document.getElementById('comparadorResult').innerHTML = html;
+  }
+
+  function agregarCotizacion() {
+    const p     = document.getElementById('prodNombre').value.trim();
+    const pr    = document.getElementById('provNombre').value.trim();
+    const precio= parseFloat(document.getElementById('precio').value);
+    const plazo = document.getElementById('plazo').value.trim() || 'A convenir';
+    const cond  = document.getElementById('cond').value.trim() || 'A convenir';
+    if (!p || !pr || isNaN(precio)) { alert('Completa al menos: Producto, Proveedor y Precio.'); return; }
+    cotizaciones.push({ producto: p, proveedor: pr, precio, plazo, condicion: cond });
+    ['prodNombre','provNombre','precio','plazo','cond'].forEach(id => document.getElementById(id).value = '');
+    renderCotizaciones();
+  }
+
+  function loadFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('dropMsg').style.display = 'none';
+    document.getElementById('dropDone').style.display = 'block';
+    document.getElementById('dropZone').classList.add('has-data');
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb   = XLSX.read(e.target.result, { type: 'binary' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws);
+        let added  = 0;
+        rows.forEach(row => {
+          const get = aliases => { for (const a of aliases) { const k = Object.keys(row).find(k2 => k2.toLowerCase().includes(a)); if (k) return row[k]; } return ''; };
+          const prod   = get(['producto','product','descripcion','item','articulo']);
+          const prov   = get(['proveedor','supplier','empresa','vendedor']);
+          const precio = parseFloat(String(get(['precio','price','costo','cost','unit'])).replace(/[^\d.]/g, ''));
+          const plazo  = get(['plazo','entrega','dias','lead']);
+          const cond   = get(['condicion','pago','payment','termino']);
+          if (prod && prov && !isNaN(precio) && precio > 0) {
+            cotizaciones.push({ producto: String(prod), proveedor: String(prov), precio, plazo: plazo || 'A convenir', condicion: cond || 'A convenir' });
+            added++;
+          }
+        });
+        if (added === 0) { document.getElementById('comparadorResult').innerHTML = '<div style="padding:12px;color:var(--text-danger);font-size:13px">No se encontraron datos validos. El Excel debe tener columnas: Producto, Proveedor, Precio.</div>'; return; }
+        renderCotizaciones();
+      } catch(err) {
+        document.getElementById('comparadorResult').innerHTML = '<div style="padding:12px;color:var(--text-danger);font-size:13px">Error al leer el archivo. Verificar formato.</div>';
+      }
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  // Init
+  renderCotizaciones();
+  setTimeout(drawVentas, 100);
+</script>
+</body>
+</html>
