@@ -171,6 +171,10 @@
   /* RADAR */
   .radar-wrap { position: relative; height: 260px; margin-bottom: 10px; }
 
+  /* RENT SUB-TABS */
+  .btn-rent { padding:6px 13px; font-size:12px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--bg-secondary); color:var(--text-secondary); cursor:pointer; font-family:var(--font); transition:all .15s; white-space:nowrap; }
+  .btn-rent.active { background:var(--text-primary); color:var(--bg-primary); border-color:var(--text-primary); font-weight:600; }
+
   /* RESPONSIVE */
   @media (max-width: 768px) {
     .mgrid { grid-template-columns: repeat(2, 1fr); }
@@ -210,7 +214,7 @@
   <button class="ntab" onclick="show('afip',this)">Facturacion AFIP</button>
   <button class="ntab" onclick="show('meli',this)">Mercado Libre</button>
   <button class="ntab" onclick="show('competencia',this)">Competencia ML</button>
-  <button class="ntab" onclick="show('roi',this)">ROI del sistema</button>
+  <button class="ntab" onclick="show('roi',this)">Rentabilidad</button>
 </div>
 
 <!-- ═══════════════ RESUMEN ═══════════════ -->
@@ -732,46 +736,114 @@
   </div>
 </div>
 
-<!-- ═══════════════ ROI ═══════════════ -->
+<!-- ═══════════════ RENTABILIDAD ═══════════════ -->
 <div id="p-roi" class="panel">
   <div class="mod-info">
-    <div class="mod-icon" style="background:#eaf3de">💡</div>
+    <div class="mod-icon" style="background:#eaf3de">📈</div>
     <div class="mod-body">
-      <div class="mod-title">Retorno de inversion del sistema</div>
-      <div class="mod-desc">Esta herramienta permite calcular cuanto dinero recuperaria el negocio si implementara el sistema, en base a sus propios numeros. Mover los sliders con los datos reales del negocio y ver en tiempo real la ganancia neta mensual, el payback y el ROI anual. Es la forma mas concreta de justificar la inversion.</div>
-      <div class="mod-tags"><span class="tag">Calculo personalizado</span><span class="tag">Payback en meses</span><span class="tag">ROI anual</span><span class="tag">Con datos reales</span></div>
+      <div class="mod-title">Rentabilidad por producto y canal de venta</div>
+      <div class="mod-desc">Analiza cuanto ganas realmente con cada producto y en cada canal. El margen % puede ser similar en todos los productos, pero la ganancia en pesos varia muchisimo — y eso cambia completamente la estrategia de venta. Tambien podes ver cuanto te cuesta vender por Mercado Libre versus mostrador.</div>
+      <div class="mod-tags"><span class="tag">Margen por producto</span><span class="tag">Ganancia por canal</span><span class="tag">Comparativa</span><span class="tag">Calculadora</span></div>
     </div>
   </div>
   <div class="panel-body">
-    <div class="two">
-      <div>
-        <div class="st">Parametros del negocio</div>
-        <div class="slider-wrap"><label>Ventas mensuales ($)</label><input type="range" id="sVentas" min="500000" max="5000000" step="50000" value="1800000" oninput="calcROI()"><span id="oVentas">$1.800.000</span></div>
-        <div class="slider-wrap"><label>Margen promedio (%)</label><input type="range" id="sMargen" min="20" max="80" step="1" value="63" oninput="calcROI()"><span id="oMargen">63%</span></div>
-        <div class="slider-wrap"><label>Perdida estimada (%)</label><input type="range" id="sPerdida" min="1" max="20" step="1" value="8" oninput="calcROI()"><span id="oPerdida">8%</span></div>
-        <div class="slider-wrap"><label>Costo del sistema ($/mes)</label><input type="range" id="sSistema" min="20000" max="200000" step="5000" value="60000" oninput="calcROI()"><span id="oSistema">$60.000</span></div>
-        <div class="slider-wrap"><label>Recupero esperado (%)</label><input type="range" id="sRecupero" min="30" max="90" step="5" value="65" oninput="calcROI()"><span id="oRecupero">65%</span></div>
+
+    <!-- KPI row -->
+    <div class="mgrid" style="margin-bottom:16px">
+      <div class="met"><div class="ml">Mayor margen</div><div class="mv up">65%</div><div class="md">Bat. 6V moto</div></div>
+      <div class="met"><div class="ml">Menor margen</div><div class="mv warn">61%</div><div class="md">Bat. 12V 90Ah</div></div>
+      <div class="met"><div class="ml">Margen promedio</div><div class="mv">63%</div><div class="md">todos los productos</div></div>
+      <div class="met"><div class="ml">Mejor en pesos</div><div class="mv up">$25.000</div><div class="md">Bat. gel 55Ah</div></div>
+    </div>
+
+    <!-- Sub-tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn-rent active" onclick="showRent('margen',this)">Margen por producto</button>
+      <button class="btn-rent" onclick="showRent('canal',this)">Ganancia por canal</button>
+      <button class="btn-rent" onclick="showRent('comparar',this)">Comparar rentabilidad</button>
+      <button class="btn-rent" onclick="showRent('calc',this)">Calculadora</button>
+    </div>
+
+    <!-- MARGEN POR PRODUCTO -->
+    <div id="rent-margen" class="rent-sp">
+      <div class="two">
+        <div>
+          <div class="st">Margen % por producto</div>
+          <div style="position:relative;height:200px"><canvas id="cMargenPct"></canvas></div>
+        </div>
+        <div>
+          <div class="st">Ganancia en pesos por unidad vendida</div>
+          <div style="position:relative;height:200px"><canvas id="cGananciaPeso"></canvas></div>
+        </div>
       </div>
-      <div>
-        <div class="st">Resultado proyectado</div>
-        <div class="card">
-          <div style="font-size:13px;color:var(--text-secondary)">Recupero mensual estimado</div>
-          <div class="roi-big" id="roiRecupero">$93.600</div>
-          <div style="font-size:12px;color:var(--text-secondary)">vs costo del sistema de <span id="roiCosto">$60.000</span>/mes</div>
-        </div>
-        <div class="card">
-          <div class="roi-row"><span>Perdida actual estimada/mes</span><span id="r1" style="font-weight:600;color:var(--text-danger)">$144.000</span></div>
-          <div class="roi-row"><span>Recupero con sistema</span><span id="r2" style="font-weight:600;color:var(--text-success)">$93.600</span></div>
-          <div class="roi-row"><span>Costo del sistema</span><span id="r3" style="font-weight:600">$60.000</span></div>
-          <div class="roi-row"><span style="font-weight:600">Ganancia neta mensual</span><span id="r4" style="font-weight:600;font-size:15px;color:var(--text-success)">+$33.600</span></div>
-        </div>
-        <div class="card">
-          <div class="roi-row"><span>Payback (meses para recuperar)</span><span id="r5" style="font-weight:600">1.8 meses</span></div>
-          <div class="roi-row"><span>ROI anual sobre inversion</span><span id="r6" style="font-weight:600;color:var(--text-success)">+56%</span></div>
-        </div>
-        <div style="font-size:11px;color:var(--text-secondary)">Estimaciones conservadoras. Los valores reales dependen del diagnostico especifico del negocio.</div>
+      <div class="st" style="margin-top:6px">Desglose completo</div>
+      <div id="rentDesglose"></div>
+      <div class="rec" style="margin-top:12px">
+        <div class="rec-t">Lectura clave</div>
+        <div class="rec-b">El margen % es similar en todos los productos (61-65%), pero la ganancia en pesos por unidad varia mucho — de $5.300 en la moto a $25.000 en la gel. Esto significa que no es lo mismo vender 10 baterias de moto que 10 baterias gel: la segunda genera casi 5 veces mas ganancia con el mismo esfuerzo de venta.</div>
       </div>
     </div>
+
+    <!-- GANANCIA POR CANAL -->
+    <div id="rent-canal" class="rent-sp" style="display:none">
+      <div class="card" style="background:var(--bg-warning);border:0.5px solid #ef9f27;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;color:var(--text-warning);margin-bottom:4px">Impacto de Mercado Libre en tu ganancia</div>
+        <div style="font-size:12px;color:var(--text-warning)">ML cobra ~12% de comision + costos Mercado Pago (total ~19%). Una bateria que en mostrador da $17.500 de ganancia, en ML solo deja $9.040. Verifica si vale la pena el volumen extra que te da.</div>
+      </div>
+      <div style="position:relative;height:240px;margin-bottom:14px"><canvas id="cCanal"></canvas></div>
+      <table>
+        <tr><th>Producto</th><th>Mostrador</th><th>Cta. corriente (-13%)</th><th>Mercado Libre (-19%)</th><th>Diferencia ML vs mostrador</th></tr>
+        <tr><td>Bat. 12V 75Ah</td><td class="up">$17.500</td><td>$15.225</td><td>$9.040</td><td class="dn">-$8.460</td></tr>
+        <tr><td>Bat. 12V 65Ah</td><td class="up">$14.000</td><td>$12.180</td><td>$7.238</td><td class="dn">-$6.762</td></tr>
+        <tr><td>Bat. 12V 45Ah</td><td class="up">$10.500</td><td>$9.135</td><td>$5.430</td><td class="dn">-$5.070</td></tr>
+        <tr><td>Bat. 12V 90Ah</td><td class="up">$22.000</td><td>$19.140</td><td>$11.374</td><td class="dn">-$10.626</td></tr>
+        <tr><td>Bat. gel 55Ah</td><td class="up">$25.000</td><td>$21.750</td><td>$12.925</td><td class="dn">-$12.075</td></tr>
+        <tr><td>Bat. 6V moto</td><td class="up">$5.300</td><td>$4.611</td><td>$2.740</td><td class="dn">-$2.560</td></tr>
+      </table>
+    </div>
+
+    <!-- COMPARAR RENTABILIDAD -->
+    <div id="rent-comparar" class="rent-sp" style="display:none">
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Ganancia mensual total por producto</div>
+        <div style="font-size:12px;color:var(--text-secondary)">Ganancia por unidad × volumen mensual estimado = cuanto genera realmente cada producto</div>
+      </div>
+      <div style="position:relative;height:220px;margin-bottom:14px"><canvas id="cComparar"></canvas></div>
+      <table>
+        <tr><th>Producto</th><th>Margen %</th><th>Ganancia/ud</th><th>Uds/mes est.</th><th>Ganancia mensual</th></tr>
+        <tr><td>Bat. 12V 75Ah</td><td>62%</td><td>$17.500</td><td>45</td><td class="up"><strong>$787.500</strong></td></tr>
+        <tr><td>Bat. 12V 65Ah</td><td>64%</td><td>$14.000</td><td>30</td><td class="up"><strong>$420.000</strong></td></tr>
+        <tr><td>Bat. 6V moto</td><td>65%</td><td>$5.300</td><td>60</td><td class="up"><strong>$318.000</strong></td></tr>
+        <tr><td>Bat. 12V 45Ah</td><td>64%</td><td>$10.500</td><td>25</td><td class="up"><strong>$262.500</strong></td></tr>
+        <tr><td>Bat. 12V 90Ah</td><td>61%</td><td>$22.000</td><td>10</td><td class="up"><strong>$220.000</strong></td></tr>
+        <tr><td>Bat. gel 55Ah</td><td>61%</td><td>$25.000</td><td>8</td><td class="up"><strong>$200.000</strong></td></tr>
+      </table>
+      <div class="rec" style="margin-top:12px">
+        <div class="rec-t">La 75Ah es el producto estrella</div>
+        <div class="rec-b">Aunque la gel tiene la mayor ganancia por unidad ($25.000), la 75Ah genera casi 4 veces mas ganancia mensual gracias al volumen. Priorizar el stock de 75Ah es la decision de mayor impacto.</div>
+      </div>
+    </div>
+
+    <!-- CALCULADORA -->
+    <div id="rent-calc" class="rent-sp" style="display:none">
+      <div class="two">
+        <div>
+          <div class="st">Ingresa los datos del producto</div>
+          <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Nombre del producto</div><input id="cNombre" placeholder="Ej: Bat. 12V 75Ah" style="width:100%"></div>
+          <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Costo de compra ($)</div><input id="cCosto" type="number" placeholder="28000" style="width:100%" oninput="calcRent()"></div>
+          <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Precio de venta ($)</div><input id="cPrecio" type="number" placeholder="45500" style="width:100%" oninput="calcRent()"></div>
+          <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Descuento cta. corriente (%)</div><input id="cDescuento" type="number" value="13" style="width:100%" oninput="calcRent()"></div>
+          <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Comision total Mercado Libre (%)</div><input id="cML" type="number" value="19" style="width:100%" oninput="calcRent()"></div>
+        </div>
+        <div>
+          <div class="st">Resultado por canal</div>
+          <div class="card" id="calcResult">
+            <div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:20px 0">Ingresa costo y precio para ver el analisis</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -790,7 +862,7 @@
     btn.classList.add('active');
     if (id === 'resumen') drawVentas();
     if (id === 'reportes') drawReportes();
-    if (id === 'roi') calcROI();
+    if (id === 'roi') initRent();
   }
 
   // Charts
@@ -848,33 +920,155 @@
     });
   }
 
-  // ROI Calculator
-  function calcROI() {
-    const ventas   = +document.getElementById('sVentas').value;
-    const perdPct  = +document.getElementById('sPerdida').value / 100;
-    const recPct   = +document.getElementById('sRecupero').value / 100;
-    const costo    = +document.getElementById('sSistema').value;
-    const margen   = +document.getElementById('sMargen').value;
-    document.getElementById('oVentas').textContent  = '$' + Math.round(ventas).toLocaleString('es-AR');
-    document.getElementById('oMargen').textContent  = margen + '%';
-    document.getElementById('oPerdida').textContent = (+document.getElementById('sPerdida').value) + '%';
-    document.getElementById('oSistema').textContent = '$' + Math.round(costo).toLocaleString('es-AR');
-    document.getElementById('oRecupero').textContent= Math.round(recPct * 100) + '%';
-    const perdida  = Math.round(ventas * perdPct);
-    const recupero = Math.round(perdida * recPct);
-    const neta     = recupero - costo;
-    const payback  = costo > 0 ? (costo / Math.max(neta, 1)).toFixed(1) : '-';
-    const roiAnual = costo > 0 ? Math.round((neta * 12 / (costo * 12)) * 100) : 0;
-    document.getElementById('roiRecupero').textContent = '$' + recupero.toLocaleString('es-AR');
-    document.getElementById('roiCosto').textContent    = '$' + Math.round(costo).toLocaleString('es-AR');
-    document.getElementById('r1').textContent = '$' + perdida.toLocaleString('es-AR');
-    document.getElementById('r2').textContent = '$' + recupero.toLocaleString('es-AR');
-    document.getElementById('r3').textContent = '$' + Math.round(costo).toLocaleString('es-AR');
-    document.getElementById('r4').textContent = (neta >= 0 ? '+' : '') + '$' + neta.toLocaleString('es-AR');
-    document.getElementById('r4').style.color = neta >= 0 ? 'var(--text-success)' : 'var(--text-danger)';
-    document.getElementById('r5').textContent = payback + ' meses';
-    document.getElementById('r6').textContent = (roiAnual >= 0 ? '+' : '') + roiAnual + '%';
-    document.getElementById('r6').style.color = roiAnual >= 0 ? 'var(--text-success)' : 'var(--text-danger)';
+  // ── RENTABILIDAD ────────────────────────────────────────────
+  const RENT_PRODS = [
+    { nombre: 'Bat. 12V 75Ah', short: '75Ah',    costo: 28000, precio: 45500, unidades: 45 },
+    { nombre: 'Bat. 12V 65Ah', short: '65Ah',    costo: 22000, precio: 36000, unidades: 30 },
+    { nombre: 'Bat. 12V 45Ah', short: '45Ah',    costo: 16500, precio: 27000, unidades: 25 },
+    { nombre: 'Bat. 12V 90Ah', short: '90Ah',    costo: 36000, precio: 58000, unidades: 10 },
+    { nombre: 'Bat. gel 55Ah', short: 'Gel 55Ah',costo: 41000, precio: 66000, unidades: 8  },
+    { nombre: 'Bat. 6V moto',  short: '6V Moto', costo: 8200,  precio: 13500, unidades: 60 },
+  ];
+  const rentMargen  = p => Math.round((p.precio - p.costo) / p.costo * 100);
+  const rentGanancia = p => p.precio - p.costo;
+
+  let rentInited = false;
+  function initRent() {
+    if (rentInited) return;
+    rentInited = true;
+    drawRentMargen();
+  }
+
+  function showRent(id, btn) {
+    document.querySelectorAll('.rent-sp').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.btn-rent').forEach(b => b.classList.remove('active'));
+    document.getElementById('rent-' + id).style.display = '';
+    btn.classList.add('active');
+    if (id === 'margen')  drawRentMargen();
+    if (id === 'canal')   drawRentCanal();
+    if (id === 'comparar') drawRentComparar();
+  }
+
+  function drawRentMargen() {
+    const { tc, gc } = getChartDefaults();
+    // Desglose table
+    const maxGan = Math.max(...RENT_PRODS.map(p => rentGanancia(p)));
+    let html = '';
+    RENT_PRODS.forEach(p => {
+      const pct = rentMargen(p);
+      const gan = rentGanancia(p);
+      const barW = Math.round(gan / maxGan * 100);
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:0.5px solid var(--border)">
+        <div style="min-width:130px;font-size:13px;font-weight:500">${p.nombre}</div>
+        <div style="flex:1"><div style="background:#1d9e75;height:18px;border-radius:3px;width:${barW}%"></div></div>
+        <div style="min-width:34px;text-align:right;font-size:12px;color:var(--text-secondary)">${pct}%</div>
+        <div style="min-width:72px;text-align:right;font-size:13px;font-weight:600;color:#1d9e75">$${gan.toLocaleString('es-AR')}</div>
+      </div>`;
+    });
+    document.getElementById('rentDesglose').innerHTML = html;
+    // Charts
+    if (!charts.margenPct) {
+      charts.margenPct = new Chart(document.getElementById('cMargenPct'), {
+        type: 'bar',
+        data: { labels: RENT_PRODS.map(p => p.short), datasets: [{ data: RENT_PRODS.map(p => rentMargen(p)), backgroundColor: '#1D9E75', borderRadius: 4, borderSkipped: false }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + '%' } } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: tc, font: { size: 11 } } },
+            y: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => v + '%' }, min: 55, max: 70 }
+          }
+        }
+      });
+    }
+    if (!charts.gananciaPeso) {
+      charts.gananciaPeso = new Chart(document.getElementById('cGananciaPeso'), {
+        type: 'bar',
+        data: { labels: RENT_PRODS.map(p => p.short), datasets: [{ data: RENT_PRODS.map(p => rentGanancia(p)), backgroundColor: '#1D9E75', borderRadius: 4, borderSkipped: false }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + Math.round(ctx.raw).toLocaleString('es-AR') } } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: tc, font: { size: 11 } } },
+            y: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => '$' + Math.round(v/1000) + 'k' } }
+          }
+        }
+      });
+    }
+  }
+
+  function drawRentCanal() {
+    if (charts.canal) return;
+    const { tc, gc } = getChartDefaults();
+    charts.canal = new Chart(document.getElementById('cCanal'), {
+      type: 'bar',
+      data: {
+        labels: RENT_PRODS.map(p => p.short),
+        datasets: [
+          { label: 'Mostrador',      data: RENT_PRODS.map(p => rentGanancia(p)),                      backgroundColor: '#1D9E75', borderRadius: 3 },
+          { label: 'Cta. corriente', data: RENT_PRODS.map(p => Math.round(rentGanancia(p) * 0.87)),   backgroundColor: '#7F77DD', borderRadius: 3 },
+          { label: 'Mercado Libre',  data: RENT_PRODS.map(p => Math.round(rentGanancia(p) * 0.517)),  backgroundColor: '#EF9F27', borderRadius: 3 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: tc, font: { size: 11 }, boxWidth: 10, padding: 8 } },
+          tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + Math.round(ctx.raw).toLocaleString('es-AR') } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: tc, font: { size: 11 } } },
+          y: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => '$' + Math.round(v/1000) + 'k' } }
+        }
+      }
+    });
+  }
+
+  function drawRentComparar() {
+    if (charts.comparar) return;
+    const { tc, gc } = getChartDefaults();
+    const sorted = [...RENT_PRODS].sort((a,b) => (rentGanancia(b)*b.unidades) - (rentGanancia(a)*a.unidades));
+    charts.comparar = new Chart(document.getElementById('cComparar'), {
+      type: 'bar',
+      data: {
+        labels: sorted.map(p => p.short),
+        datasets: [{ label: 'Ganancia mensual', data: sorted.map(p => rentGanancia(p) * p.unidades), backgroundColor: '#1D9E75', borderRadius: 4, borderSkipped: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + Math.round(ctx.raw).toLocaleString('es-AR') + '/mes' } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: tc, font: { size: 11 } } },
+          y: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => '$' + Math.round(v/1000) + 'k' } }
+        }
+      }
+    });
+  }
+
+  function calcRent() {
+    const costo   = +document.getElementById('cCosto').value;
+    const precio  = +document.getElementById('cPrecio').value;
+    const descCte = +document.getElementById('cDescuento').value / 100;
+    const comML   = +document.getElementById('cML').value / 100;
+    const nombre  = document.getElementById('cNombre').value || 'Producto';
+    if (!costo || !precio) return;
+    const ganMostr = precio - costo;
+    const ganCte   = Math.round(precio * (1 - descCte)) - costo;
+    const ganML    = Math.round(precio * (1 - comML)) - costo;
+    const margen   = Math.round((precio - costo) / costo * 100);
+    const fmt = v => (v >= 0 ? '$' : '-$') + Math.abs(Math.round(v)).toLocaleString('es-AR');
+    const col = v => v >= 0 ? 'var(--text-success)' : 'var(--text-danger)';
+    document.getElementById('calcResult').innerHTML = `
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">${nombre}</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Margen sobre costo</div>
+        <div style="font-size:28px;font-weight:700;color:var(--text-success)">${margen}%</div>
+      </div>
+      <div class="roi-row"><span>Ganancia mostrador</span><span style="font-weight:600;color:${col(ganMostr)}">${fmt(ganMostr)}</span></div>
+      <div class="roi-row"><span>Ganancia cta. corriente (-${Math.round(descCte*100)}%)</span><span style="font-weight:600;color:${col(ganCte)}">${fmt(ganCte)}</span></div>
+      <div class="roi-row"><span>Ganancia Mercado Libre (-${Math.round(comML*100)}%)</span><span style="font-weight:600;color:${col(ganML)}">${fmt(ganML)}</span></div>
+      <div class="roi-row" style="border-top:0.5px solid var(--border);padding-top:10px;margin-top:4px"><span>ML vs mostrador</span><span style="font-weight:600;color:${col(ganML-ganMostr)}">${fmt(ganML-ganMostr)}</span></div>
+    `;
   }
 
   // Simulador competencia ML
