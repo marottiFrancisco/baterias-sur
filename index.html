@@ -229,16 +229,16 @@
   </div>
   <div class="panel-body">
     <div class="mgrid">
-      <div class="met"><div class="ml">Ventas hoy</div><div class="mv">$184.500</div><div class="md up">+12% vs ayer</div></div>
-      <div class="met"><div class="ml">Unidades</div><div class="mv">23</div><div class="md up">+3 vs ayer</div></div>
-      <div class="met"><div class="ml">Stock critico</div><div class="mv dn">4</div><div class="md dn">a reponer</div></div>
-      <div class="met"><div class="ml">Deuda vencida</div><div class="mv warn">$67.200</div><div class="md dn">3 clientes</div></div>
+      <div class="met"><div class="ml">Facturacion hoy</div><div class="mv up">$1.668.700</div><div class="md up">12 Abr 2026</div></div>
+      <div class="met"><div class="ml">Servicios hoy</div><div class="mv">19</div><div class="md">3 mecanicos activos</div></div>
+      <div class="met"><div class="ml">Total periodo</div><div class="mv up" id="kpiPeriodo">...</div><div class="md">1 al 12 de Abr</div></div>
+      <div class="met"><div class="ml">Registros periodo</div><div class="mv">213</div><div class="md">12 dias de trabajo</div></div>
     </div>
     <div class="mgrid">
-      <div class="met"><div class="ml">Garantias abiertas</div><div class="mv warn">3</div><div class="md">en proceso</div></div>
-      <div class="met"><div class="ml">Entregas pendientes</div><div class="mv">5</div><div class="md">para hoy y manana</div></div>
-      <div class="met"><div class="ml">Facturas AFIP pend.</div><div class="mv warn">2</div><div class="md dn">sin emitir</div></div>
-      <div class="met"><div class="ml">Diferencia proveed.</div><div class="mv dn">$23.400</div><div class="md dn">pagado de mas</div></div>
+      <div class="met"><div class="ml">Colocaciones bat.</div><div class="mv up" id="kpiBat">...</div><div class="md">periodo</div></div>
+      <div class="met"><div class="ml">Puestas en marcha</div><div class="mv" id="kpiPM">...</div><div class="md">periodo</div></div>
+      <div class="met"><div class="ml">Mecanico lider</div><div class="mv up" id="kpiLider">Tomas</div><div class="md" id="kpiLiderSub">...</div></div>
+      <div class="met"><div class="ml">Ticket promedio</div><div class="mv" id="kpiTicket">...</div><div class="md">colocaciones bat.</div></div>
     </div>
     <div class="two">
       <div>
@@ -298,23 +298,38 @@
     </div>
   </div>
   <div class="panel-body">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="display:flex;gap:8px">
-        <select><option>Hoy</option><option>Esta semana</option><option>Este mes</option></select>
-        <select><option>Todos los vendedores</option><option>Carlos R.</option><option>Maria G.</option></select>
-      </div>
-      <button class="btn">+ Nueva venta</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <input id="vFiltBuscar" placeholder="Buscar vehiculo o modelo..." style="width:190px" oninput="renderVentas()">
+      <select id="vFiltMec" onchange="renderVentas()">
+        <option value="">Todos los mecanicos</option>
+        <option>Cristian</option><option>Tomas</option><option>Santi</option><option>Juan Manuel</option>
+      </select>
+      <select id="vFiltServ" onchange="renderVentas()">
+        <option value="">Todos los servicios</option>
+        <option value="Bat">Colocacion bateria</option>
+        <option value="PM">Puesta en marcha</option>
+        <option value="Neu">Cambio neumatico</option>
+        <option value="Otro">Otro</option>
+      </select>
+      <select id="vFiltFecha" onchange="renderVentas()">
+        <option value="">Todos los dias</option>
+        <option>01/04</option><option>02/04</option><option>03/04</option><option>04/04</option>
+        <option>05/04</option><option>06/04</option><option>07/04</option><option>08/04</option>
+        <option>09/04</option><option>10/04</option><option>11/04</option><option>12/04</option><option>13/04</option>
+      </select>
     </div>
+    <div style="overflow-x:auto">
     <table>
-      <tr><th>Hora</th><th>Cliente</th><th>Producto</th><th>Cant</th><th>Total</th><th>Vendedor</th><th>Pago</th><th>Factura</th></tr>
-      <tr><td style="color:var(--text-secondary)">09:14</td><td>Taller Gomez</td><td>Bat. 12V 75Ah</td><td>2</td><td><strong>$91.000</strong></td><td>Carlos R.</td><td><span class="badge bg">Efectivo</span></td><td><span class="badge bg">Emitida</span></td></tr>
-      <tr><td style="color:var(--text-secondary)">10:32</td><td>Mostrador</td><td>Bat. 12V 65Ah</td><td>1</td><td><strong>$36.000</strong></td><td>Maria G.</td><td><span class="badge bb">Transfer.</span></td><td><span class="badge bg">Emitida</span></td></tr>
-      <tr><td style="color:var(--text-secondary)">11:05</td><td>Autoparts SA</td><td>Bat. 12V 45Ah</td><td>3</td><td><strong>$81.000</strong></td><td>Carlos R.</td><td><span class="badge ba">Cta. cte.</span></td><td><span class="badge br">Pendiente</span></td></tr>
-      <tr><td style="color:var(--text-secondary)">14:40</td><td>Flota Logistica</td><td>Bat. 12V 90Ah</td><td>4</td><td><strong>$220.000</strong></td><td>Carlos R.</td><td><span class="badge ba">Cta. cte.</span></td><td><span class="badge br">Pendiente</span></td></tr>
+      <tr><th>Fecha</th><th>Vehiculo</th><th>Servicio</th><th>Modelo bat.</th><th>Importe</th><th>Mecanico</th><th>Pago</th><th>Obs</th></tr>
+      <tbody id="ventasTbody"></tbody>
     </table>
-    <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:20px">
-      <span style="font-size:13px;color:var(--text-secondary)">Total del dia:</span>
-      <span style="font-size:16px;font-weight:600">$428.000</span>
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span style="font-size:12px;color:var(--text-secondary)" id="ventasCount">213 registros</span>
+      <div style="display:flex;gap:20px">
+        <span style="font-size:13px;color:var(--text-secondary)">Total filtrado:</span>
+        <span style="font-size:16px;font-weight:600" id="ventasTotal">$0</span>
+      </div>
     </div>
   </div>
 </div>
@@ -363,28 +378,34 @@
     <div class="two">
       <div>
         <div class="st">Resumen del dia</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">12 de Abril 2026 — Cierre del dia</div>
         <div class="mgrid2" style="margin-bottom:12px">
-          <div class="met"><div class="ml">Efectivo</div><div class="mv">$97.500</div></div>
-          <div class="met"><div class="ml">Transfer.</div><div class="mv">$36.000</div></div>
-          <div class="met"><div class="ml">Cta. cte.</div><div class="mv">$301.000</div></div>
-          <div class="met"><div class="ml">Saldo caja</div><div class="mv up">$57.500</div></div>
+          <div class="met"><div class="ml">Efectivo</div><div class="mv">$400.000</div></div>
+          <div class="met"><div class="ml">Transferencia</div><div class="mv">$359.900</div></div>
+          <div class="met"><div class="ml">Debito</div><div class="mv">$321.300</div></div>
+          <div class="met"><div class="ml">Cuotas (3/6)</div><div class="mv up">$587.500</div></div>
         </div>
         <div style="padding:12px;background:var(--bg-secondary);border-radius:var(--radius-md)">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Apertura</span><span style="font-size:13px;font-weight:600">$10.000</span></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Ingresos efectivo</span><span style="font-size:13px;font-weight:600;color:var(--text-success)">+$97.500</span></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Retiro intermedio</span><span style="font-size:13px;font-weight:600;color:var(--text-danger)">-$50.000</span></div>
-          <div style="border-top:0.5px solid var(--border);padding-top:8px;margin-top:6px;display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">Saldo en caja</span><span style="font-size:15px;font-weight:600;color:var(--text-success)">$57.500</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Efectivo cobrado</span><span style="font-size:13px;font-weight:600;color:var(--text-success)">+$400.000</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Transferencias</span><span style="font-size:13px;font-weight:600;color:var(--text-success)">+$359.900</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Debito</span><span style="font-size:13px;font-weight:600;color:var(--text-success)">+$321.300</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--text-secondary)">Cuotas (pendiente acreditacion)</span><span style="font-size:13px;font-weight:600;color:var(--text-warning)">$587.500</span></div>
+          <div style="border-top:0.5px solid var(--border);padding-top:8px;margin-top:6px;display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">Total facturado</span><span style="font-size:15px;font-weight:600;color:var(--text-success)">$1.668.700</span></div>
         </div>
       </div>
       <div>
-        <div class="st">Por vendedor</div>
+        <div class="st">Por mecanico — 12 Abr</div>
         <div style="padding:10px 0;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between">
-          <div><div style="font-size:13px;font-weight:600">Carlos R.</div><div style="font-size:12px;color:var(--text-secondary)">14 ventas</div><div class="pbar" style="width:140px"><div class="pbf" style="width:70%;background:#1d9e75"></div></div></div>
-          <div style="text-align:right"><div style="font-size:14px;font-weight:600">$310.000</div><div style="font-size:11px;color:var(--text-secondary)">70%</div></div>
+          <div><div style="font-size:13px;font-weight:600">Cristian</div><div style="font-size:12px;color:var(--text-secondary)">7 servicios</div><div class="pbar" style="width:140px"><div class="pbf" style="width:54%;background:#1d9e75"></div></div></div>
+          <div style="text-align:right"><div style="font-size:14px;font-weight:600">$899.550</div><div style="font-size:11px;color:var(--text-secondary)">54%</div></div>
+        </div>
+        <div style="padding:10px 0;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between">
+          <div><div style="font-size:13px;font-weight:600">Santi</div><div style="font-size:12px;color:var(--text-secondary)">7 servicios</div><div class="pbar" style="width:140px"><div class="pbf" style="width:35%;background:#7f77dd"></div></div></div>
+          <div style="text-align:right"><div style="font-size:14px;font-weight:600">$579.150</div><div style="font-size:11px;color:var(--text-secondary)">35%</div></div>
         </div>
         <div style="padding:10px 0;display:flex;justify-content:space-between">
-          <div><div style="font-size:13px;font-weight:600">Maria G.</div><div style="font-size:12px;color:var(--text-secondary)">9 ventas</div><div class="pbar" style="width:140px"><div class="pbf" style="width:30%;background:#7f77dd"></div></div></div>
-          <div style="text-align:right"><div style="font-size:14px;font-weight:600">$131.500</div><div style="font-size:11px;color:var(--text-secondary)">30%</div></div>
+          <div><div style="font-size:13px;font-weight:600">Tomas</div><div style="font-size:12px;color:var(--text-secondary)">5 servicios</div><div class="pbar" style="width:140px"><div class="pbf" style="width:11%;background:#ef9f27"></div></div></div>
+          <div style="text-align:right"><div style="font-size:14px;font-weight:600">$190.000</div><div style="font-size:11px;color:var(--text-secondary)">11%</div></div>
         </div>
       </div>
     </div>
@@ -861,6 +882,7 @@
     document.getElementById('p-' + id).classList.add('active');
     btn.classList.add('active');
     if (id === 'resumen') drawVentas();
+    if (id === 'ventas') renderVentas();
     if (id === 'reportes') drawReportes();
     if (id === 'roi') initRent();
   }
@@ -882,8 +904,8 @@
     charts.ventas = new Chart(c, {
       type: 'bar',
       data: {
-        labels: ['Lun','Mar','Mie','Jue','Vie','Sab','Hoy'],
-        datasets: [{ data: [142000,98000,215000,176000,310000,88000,184500], backgroundColor: ['#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#1D9E75'], borderRadius: 4, borderSkipped: false }]
+        labels: ['6 Abr','7 Abr','8 Abr','9 Abr','10 Abr','11 Abr','12 Abr'],
+        datasets: [{ data: [1801400,1821000,1522850,1605500,1830300,1796650,1668700], backgroundColor: ['#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#9FE1CB','#1D9E75'], borderRadius: 4, borderSkipped: false }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -1178,8 +1200,308 @@
     reader.readAsBinaryString(file);
   }
 
+  // ── BASE DE DATOS REAL (Abril 2026) ─────────────────────────────
+  // [fecha, vehiculo, servicio, modelo, pago, importe, mecanico, obs]
+  // servicio: 'Bat'=colocacion, 'PM'=puesta en marcha, 'Neu'=neumatico, 'Otro'
+  const DB=[
+['01/04','Partner','Bat','60HD','Cta. cte.',0,'Cristian','Carmanagment'],
+['01/04','206 Diesel','Bat','26AD','Debito',196400,'Cristian',''],
+['01/04','Amarock','Bat','UB840','Efectivo',190500,'Cristian','Otro cliente feliz'],
+['01/04','Duster','PM','','',0,'Santi',''],
+['01/04','Kangoo','PM','','',0,'Santi',''],
+['01/04','Kangoo','PM','','',0,'Santi',''],
+['01/04','Etios','PM','','',0,'Santi',''],
+['01/04','Suran','PM','','',0,'Santi',''],
+['01/04','Focus','PM','','',0,'Santi',''],
+['01/04','Tracker','PM','','',0,'Santi',''],
+['01/04','Fit','Otro','','Transferencia',25000,'Juan Manuel','Revision garantia - alternador'],
+['01/04','Prisma','Bat','UB670','Transferencia',160650,'Juan Manuel',''],
+['01/04','Nissan March','Bat','F50GD','6 Cuotas',186000,'Juan Manuel','Venta'],
+['01/04','Polo','PM','','',0,'Juan Manuel',''],
+['02/04','Corolla','Neu','','',0,'Tomas',''],
+['02/04','Megane','Bat','UB620','Efectivo',149600,'Tomas',''],
+['02/04','Fiat Idea','PM','','',0,'Tomas',''],
+['02/04','Etios','Bat','F50GD','6 Cuotas',186000,'Tomas','Venta'],
+['02/04','Corolla','Bat','M22ED','Transferencia',172550,'Tomas',''],
+['02/04','Idea','Bat','UB620','Efectivo',145600,'Tomas',''],
+['02/04','BJ40 Plus','Bat','UB840','Efectivo',203200,'Tomas',''],
+['02/04','Sorento','Bat','UB710','Efectivo',219000,'Tomas',''],
+['02/04','Clio','Bat','BA620','Transferencia',132600,'Santi',''],
+['02/04','Peugeot 301','Bat','UB730','6 Cuotas',207000,'Santi',''],
+['02/04','Clio','Bat','BA620','Efectivo',117000,'Santi',''],
+['02/04','Territory','PM','','',0,'Santi','Cancelado con costo'],
+['02/04','Nissan Versa','Bat','UB670','6 Cuotas',189000,'Santi',''],
+['02/04','Peugeot 308','Bat','M26AD','6 Cuotas',222000,'Santi',''],
+['03/04','Versa','Bat','22ED','6 Cuotas',203000,'Tomas',''],
+['03/04','Peugeot 308','Bat','Bari840','Efectivo',147800,'Tomas',''],
+['03/04','P307cc','PM','','',0,'Tomas',''],
+['03/04','C4','Bat','F60HD','Efectivo',155200,'Tomas',''],
+['03/04','Captiva','PM','','Efectivo',25000,'Tomas','Particular'],
+['03/04','Tracker','Bat','UB840','6 Cuotas',254000,'Tomas',''],
+['03/04','Ecosport','Otro','','1 Cuota',25000,'Santi','No era tema de bateria'],
+['03/04','Yaris','Bat','50GD','Transferencia',158100,'Santi',''],
+['03/04','P306','PM','','',0,'Santi',''],
+['03/04','Spin','PM','','',0,'Santi',''],
+['03/04','(s/v)','Bat','UB930','3 Cuotas',302500,'Santi','10 mil efectivo + 3 cuotas'],
+['03/04','Ibiza','Neu','','',0,'Santi',''],
+['03/04','Suran','PM','','',0,'Santi',''],
+['03/04','City','PM','','',0,'Santi',''],
+['04/04','Sandero','Bat','Heliar 50GD','Debito',160000,'Cristian','Asistencia y venta'],
+['04/04','Oroch','PM','','',0,'Cristian',''],
+['04/04','Koleo','PM','','',0,'Cristian',''],
+['04/04','Corolla','Bat','Wilard 670','3 Cuotas',170100,'Cristian',''],
+['04/04','Corsa','Bat','20GD','3 Cuotas',198000,'Cristian',''],
+['04/04','Gol','PM','','',0,'Tomas',''],
+['04/04','Berlingo','Bat','M26AD','Transferencia',190400,'Tomas',''],
+['04/04','Sandero','Bat','Bari620','1 Cuota',132600,'Tomas',''],
+['04/04','Picasso','Bat','UB620','6 Cuotas',182000,'Tomas',''],
+['04/04','Peugeot 2008','Bat','UB620','6 Cuotas',182000,'Santi','Venta'],
+['04/04','Honda Fit','PM','','Transferencia',25000,'Santi',''],
+['04/04','P207','Bat','','',0,'Santi','No se coloco - terminal negativo'],
+['04/04','Agile','Bat','UB620','Efectivo',145600,'Santi',''],
+['04/04','Etios','Bat','UB670','3 Cuotas',170100,'Tomas',''],
+['04/04','Taos','Bat','EFB730','Efectivo',205600,'Tomas',''],
+['04/04','Clio','Bat','M22GD','Debito',183600,'Tomas',''],
+['04/04','Bronco','Bat','L3','Transferencia',195500,'Tomas','Venta'],
+['04/04','Liga','Bat','22ED','1 Cuota',174250,'Tomas',''],
+['05/04','Kangoo','Bat','UB620','Efectivo',145600,'Tomas','Venta'],
+['05/04','Etios','Bat','M22ED','Efectivo',164000,'Tomas',''],
+['05/04','Ranger 2.2','Bat','M80CD','Efectivo',228800,'Tomas',''],
+['05/04','Fox','Bat','UB620','Transferencia',154700,'Tomas',''],
+['05/04','Cronos','PM','','Transferencia',25000,'Tomas','Particular'],
+['05/04','Sandero','Bat','F60HD','Transferencia',164900,'Tomas',''],
+['05/04','Berlingo','Bat','F60HD','Transferencia',176000,'Tomas','Venta'],
+['05/04','Civic','Bat','UB425','Efectivo',152000,'Tomas',''],
+['05/04','Journey','PM','','Efectivo',25000,'Santi',''],
+['05/04','Gol Trend','Bat','UB670','6 Cuotas',189000,'Santi','Venta'],
+['05/04','Fiorino','Neu','','',0,'Santi',''],
+['05/04','Rav 4','PM','','Transferencia',25000,'Santi',''],
+['05/04','Stepway','Bat','UB620','Efectivo',145600,'Santi','Venta'],
+['05/04','Nivus','PM','','',0,'Santi',''],
+['05/04','Renegade','PM','','',0,'Santi',''],
+['05/04','Fit','Bat','M18SD','Transferencia',156400,'Santi',''],
+['05/04','Suran','PM','','',0,'Santi',''],
+['05/04','Wafon','PM','','',0,'Juan Manuel',''],
+['05/04','Celta','Bat','20GD','6 Cuotas',200000,'Juan Manuel',''],
+['05/04','Yaris','Bat','F50GD','6 Cuotas',186000,'Juan Manuel',''],
+['05/04','308','Bat','UB730','Efectivo',160000,'Juan Manuel',''],
+['06/04','T-Cross','Bat','M22ED','6 Cuotas',205000,'Santi',''],
+['06/04','Citroen C3','Otro','','',0,'Santi','Cancelado'],
+['06/04','Citroen C4','Neu','','',0,'Santi','Inflado de neumatico'],
+['06/04','Peugeot 207','PM','','',0,'Santi',''],
+['06/04','Citroen C3','PM','','',0,'Santi',''],
+['06/04','Corolla','Bat','60HD','6 Cuotas',194000,'Santi','Venta'],
+['06/04','Territory','Bat','HE75PD','Efectivo',190400,'Santi',''],
+['06/04','Civic','Bat','M22JD','6 Cuotas',203000,'Santi',''],
+['06/04','VW T-Cross','PM','','',0,'Santi','Cancelado con costo'],
+['06/04','Territory','Bat','75PD','Cta. cte.',288000,'Tomas','Cuenta corriente'],
+['06/04','Civic','Bat','F45JD','Transferencia',204000,'Tomas',''],
+['06/04','Suran','Bat','UB620','Transferencia',154700,'Juan Manuel',''],
+['06/04','Suran','Bat','M20GD','Transferencia',168300,'Juan Manuel',''],
+['06/04','Stepway','PM','','',0,'Juan Manuel',''],
+['06/04','Territory','PM','','',0,'Juan Manuel',''],
+['06/04','Strada','Bat','F60HD','Otro',194000,'Juan Manuel','Abono QR Jumbo'],
+['06/04','Siena','Bat','Usada 12x65','Otro',0,'Juan Manuel','Abona $50mil por MP'],
+['07/04','Captur','Bat','HE75PD','Efectivo',178500,'Tomas',''],
+['07/04','Peugeot 207','Bat','UB620','6 Cuotas',182000,'Tomas',''],
+['07/04','Honda Fit','Bat','UB325','Efectivo',136800,'Cristian',''],
+['07/04','Corsa','Bat','Muleto','',0,'Cristian','Revision garantia - muleto'],
+['07/04','Ranger','Bat','','Transferencia',215900,'Cristian','Asistencia y venta'],
+['07/04','207','Bat','Bari 65','6 Cuotas',156000,'Cristian',''],
+['07/04','P408','Bat','75PD','Efectivo',190400,'Cristian',''],
+['07/04','Corven Expert','PM','','',0,'Cristian',''],
+['07/04','Ranger','PM','','',0,'Cristian',''],
+['07/04','Corolla','PM','','',0,'Tomas',''],
+['07/04','Focus','Bat','M24KD','Efectivo',191200,'Tomas','Venta'],
+['07/04','Porsche Cayenne','PM','','Transferencia',25000,'Tomas',''],
+['07/04','Etios','Neu','','',0,'Juan Manuel',''],
+['07/04','Agile','Bat','M22ED','6 Cuotas',205000,'Juan Manuel',''],
+['07/04','Palio','Bat','UB670','3 Cuotas',170100,'Juan Manuel',''],
+['07/04','Peugeot 208','Bat','UB670','3 Cuotas',170100,'Juan Manuel',''],
+['08/04','Sprinter','Bat','95QD','Transferencia',400000,'Tomas',''],
+['08/04','Ford K','PM','','Debito',25000,'Cristian','Solo asistencia'],
+['08/04','208','PM','','Debito',25000,'Cristian','Problema de llave'],
+['08/04','Focus','Bat','UB740','Transferencia',185300,'Cristian','Asistencia con colocacion'],
+['08/04','Fit','Bat','Muleto','',0,'Cristian','Se lleva a revisar'],
+['08/04','Ford Transit','Bat','UB1030','Cta. cte.',0,'Cristian',''],
+['08/04','Sandero','PM','','',0,'Santi',''],
+['08/04','Renault Nevada','PM','','',0,'Santi',''],
+['08/04','Kangoo','PM','','',0,'Santi',''],
+['08/04','Hyundai','PM','','',0,'Santi',''],
+['08/04','Citroen DS7','Otro','','',0,'Santi','Retiro bateria garantia'],
+['08/04','Focus 2.0','Bat','Moura22GD','1 Cuota',183000,'Santi',''],
+['08/04','Sandero Stepway','Bat','UB670','6 Cuotas',189000,'Santi',''],
+['08/04','Etios','Bat','M22ED','Cta. cte.',0,'Juan Manuel',''],
+['08/04','Golf','Bat','UB730','6 Cuotas',207000,'Juan Manuel',''],
+['08/04','Chery Tiggo','PM','','',0,'Juan Manuel',''],
+['08/04','Focus','Bat','Bari620','Transferencia',132600,'Juan Manuel',''],
+['08/04','Kangoo','Bat','UB730','Transferencia',175950,'Juan Manuel',''],
+['09/04','Sandero','PM','','',0,'Santi',''],
+['09/04','Jaguar S-TY','PM','','',0,'Santi',''],
+['09/04','Spin','PM','','',0,'Santi',''],
+['09/04','S10','Bat','UB1030 usada','Efectivo',90000,'Santi',''],
+['09/04','Corsa','PM','','Efectivo',25000,'Santi','Prob. alternador'],
+['09/04','Polo','Bat','M22ED','6 Cuotas',205000,'Santi',''],
+['09/04','Fit','PM','','',0,'Santi',''],
+['09/04','P208','Bat','F60HD','Transferencia',164900,'Santi','Venta'],
+['09/04','Palio','Bat','UB670','6 Cuotas',189000,'Santi',''],
+['09/04','Renault 19','Bat','Bari620','Efectivo',0,'Juan Manuel','Abono previo - terminal +'],
+['09/04','Ranger','PM','','',0,'Juan Manuel',''],
+['09/04','Nissan March','Bat','F50GD','Transferencia',158100,'Juan Manuel',''],
+['09/04','Logan','PM','','',0,'Juan Manuel',''],
+['09/04','Palio','Bat','UB670','6 Cuotas',189000,'Juan Manuel',''],
+['09/04','Focus','PM','','Efectivo',25000,'Cristian',''],
+['09/04','Prisma','PM','','',0,'Cristian',''],
+['09/04','Compass','Bat','L3 Mateo','Transferencia',195500,'Cristian',''],
+['09/04','Versa+Logan','Bat','22ED','Efectivo',184000,'Cristian',''],
+['09/04','Onix','PM','','',0,'Cristian',''],
+['09/04','Corsa','Bat','20GD','3 Cuotas',180000,'Cristian',''],
+['10/04','CRV','PM','','Efectivo',25000,'Santi',''],
+['10/04','Etios','Bat','F50GD','3 Cuotas',167400,'Santi','Venta'],
+['10/04','Gol','PM','','',0,'Santi',''],
+['10/04','Kangoo','PM','','Efectivo',25000,'Santi',''],
+['10/04','Kangoo','Bat','','',0,'Santi',''],
+['10/04','Peugeot 308','Bat','M26AD','Efectivo',179200,'Santi',''],
+['10/04','Gol Trend','PM','','',0,'Santi',''],
+['10/04','Siena','Bat','UB670','6 Cuotas',189000,'Santi',''],
+['10/04','Corolla','Bat','UB730','1 Cuota',180000,'Juan Manuel',''],
+['10/04','Logan','Bat','UB670','6 Cuotas',189000,'Juan Manuel',''],
+['10/04','Peugeot 207','Bat','M20GD','6 Cuotas',190000,'Juan Manuel','Desc 10mil'],
+['10/04','Cronos','PM','','',0,'Juan Manuel',''],
+['10/04','Cherokee','PM','','',0,'Juan Manuel',''],
+['10/04','Bora Taxi','PM','','Transferencia',25000,'Juan Manuel',''],
+['10/04','Picasso','PM','','',0,'Juan Manuel','Cancelado con costo'],
+['10/04','Sandero','Bat','F50GD','Transferencia',158100,'Juan Manuel',''],
+['10/04','Audi A3','Bat','UB840','Efectivo',203000,'Cristian','Asistencia y venta'],
+['10/04','Citroen C4','PM','','Efectivo',15000,'Cristian','Colocacion borne negativo'],
+['10/04','Civic','Otro','','',0,'Cristian','Puente bateria + cambio neumatico'],
+['10/04','Civic','Otro','','',0,'Cristian',''],
+['10/04','HRV','Bat','UB425','Efectivo',152000,'Cristian',''],
+['10/04','206','Bat','Bari 65','Transferencia',132600,'Cristian',''],
+['11/04','Kymco DTX350','Bat','YTX9BS','Efectivo',69000,'Cristian','Asistencia y venta'],
+['11/04','Suran','PM','','Transferencia',25000,'Cristian',''],
+['11/04','Logan Taxi','Bat','UB730','6 Cuotas',207000,'Cristian',''],
+['11/04','Ecosport','Bat','UB450','3 Cuotas',155700,'Cristian',''],
+['11/04','Corolla','Bat','Heliar 50GD','Efectivo',148800,'Cristian',''],
+['11/04','Fox','PM','','',0,'Santi',''],
+['11/04','Spin','Neu','','',0,'Santi',''],
+['11/04','Focus','PM','','Transferencia',25000,'Santi',''],
+['11/04','Suran','PM','','',0,'Santi',''],
+['11/04','HRV','Bat','M22JD','6 Cuotas',205000,'Santi',''],
+['11/04','Citroen C3','PM','','',0,'Santi',''],
+['11/04','Moto JAWA 600','PM','','',0,'Santi',''],
+['11/04','Partner','Bat','UB730','Transferencia',175950,'Santi',''],
+['11/04','Partner','Bat','Bari 80','',0,'Juan Manuel','Se cobra en Jumbo'],
+['11/04','VW Fox','Bat','M20GD','Transferencia',170000,'Juan Manuel',''],
+['11/04','Suran','Bat','UB620','6 Cuotas',182000,'Juan Manuel',''],
+['11/04','Peugeot 208','Bat','UB730','3 Cuotas',186300,'Juan Manuel',''],
+['11/04','Vento','Bat','EFB730','Transferencia',246900,'Juan Manuel',''],
+['12/04','T-Cross','Bat','22ED','Transferencia',174250,'Cristian',''],
+['12/04','Yaris','Bat','UB670','Transferencia',160650,'Cristian',''],
+['12/04','Journey','PM','','Transferencia',25000,'Cristian',''],
+['12/04','Logan','Bat','UB670','Debito',160650,'Cristian',''],
+['12/04','Vento','Bat','Heliar 60HD','6 Cuotas',194000,'Cristian','Asistencia y venta'],
+['12/04','Master','PM','','Efectivo',25000,'Cristian',''],
+['12/04','Fiesta','Neu','20GD','Efectivo',160000,'Cristian',''],
+['12/04','BMW 128i','PM','','Efectivo',25000,'Tomas',''],
+['12/04','Tracker','PM','','',0,'Tomas',''],
+['12/04','Peugeot 308','Bat','UB730','Efectivo',165000,'Tomas',''],
+['12/04','P206','PM','','',0,'Tomas','Sin costo'],
+['12/04','Ford Ka','PM','','',0,'Tomas',''],
+['12/04','Corolla','Bat','UB670','Debito',160650,'Santi',''],
+['12/04','Traffic','PM','','Efectivo',25000,'Santi',''],
+['12/04','Cherokee','PM','','',0,'Santi',''],
+['12/04','Ecosport','Bat','M20GD','6 Cuotas',200000,'Santi',''],
+['12/04','Voyage','Neu','','',0,'Santi',''],
+['12/04','HRV','Bat','UB425','3 Cuotas',193500,'Santi',''],
+['12/04','Onix','PM','','',0,'Santi',''],
+['13/04','Traffic','PM','','',0,'Santi','Bateria muerta'],
+['13/04','Siena','PM','','',0,'Santi',''],
+  ];
+
+  // ── HELPERS ──────────────────────────────────────────────────────
+  function mecColor(m) {
+    return {Cristian:'bg',Tomas:'bb',Santi:'bp',['Juan Manuel']:'bgr'}[m]||'bgr';
+  }
+  function servBadge(s) {
+    const map={Bat:'<span class="badge bg">Bat</span>',PM:'<span class="badge bb">PM</span>',Neu:'<span class="badge ba">Neu</span>',Otro:'<span class="badge bgr">Otro</span>'};
+    return map[s]||s;
+  }
+  function pagoBadge(p) {
+    if(!p) return '<span class="badge bgr">—</span>';
+    if(p==='Efectivo') return '<span class="badge bg">Efectivo</span>';
+    if(p==='Transferencia') return '<span class="badge bb">Transfer.</span>';
+    if(p==='Debito') return '<span class="badge bb">Debito</span>';
+    if(p.includes('Cuota')) return '<span class="badge ba">'+p+'</span>';
+    if(p==='Cta. cte.') return '<span class="badge ba">Cta. cte.</span>';
+    return '<span class="badge bgr">'+p+'</span>';
+  }
+
+  // ── RENDER VENTAS ─────────────────────────────────────────────────
+  function renderVentas() {
+    const buscar  = (document.getElementById('vFiltBuscar')||{}).value?.toLowerCase()||'';
+    const mec     = (document.getElementById('vFiltMec')||{}).value||'';
+    const serv    = (document.getElementById('vFiltServ')||{}).value||'';
+    const fecha   = (document.getElementById('vFiltFecha')||{}).value||'';
+
+    const filtrados = DB.filter(r =>
+      (!buscar || r[1].toLowerCase().includes(buscar) || r[3].toLowerCase().includes(buscar)) &&
+      (!mec    || r[6] === mec) &&
+      (!serv   || r[2] === serv) &&
+      (!fecha  || r[0] === fecha)
+    );
+
+    const total = filtrados.reduce((s,r)=>s+r[5],0);
+    let html = '';
+    // Most recent first
+    const reversed = [...filtrados].reverse();
+    reversed.forEach(r => {
+      const [f,v,s,m,p,i,mec2,obs] = r;
+      const imp = i > 0 ? '<strong>$'+i.toLocaleString('es-AR')+'</strong>' : '<span style="color:var(--text-secondary)">—</span>';
+      html += `<tr>
+        <td style="color:var(--text-secondary);white-space:nowrap">${f}</td>
+        <td style="font-weight:500">${v||'—'}</td>
+        <td>${servBadge(s)}</td>
+        <td style="font-size:12px;color:var(--text-secondary)">${m||'—'}</td>
+        <td>${imp}</td>
+        <td><span class="badge ${mecColor(mec2)}">${mec2}</span></td>
+        <td>${pagoBadge(p)}</td>
+        <td style="font-size:11px;color:var(--text-secondary);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${obs}">${obs||''}</td>
+      </tr>`;
+    });
+    const tbody = document.getElementById('ventasTbody');
+    if (tbody) tbody.innerHTML = html;
+    const countEl = document.getElementById('ventasCount');
+    if (countEl) countEl.textContent = filtrados.length + ' registros' + (filtrados.length < DB.length ? ' (filtrados de '+DB.length+')' : '');
+    const totalEl = document.getElementById('ventasTotal');
+    if (totalEl) totalEl.textContent = '$' + total.toLocaleString('es-AR');
+  }
+
+  // ── INIT DEMO DATA (Resumen KPIs) ────────────────────────────────
+  function initDemoData() {
+    const totalPeriodo = DB.reduce((s,r)=>s+r[5],0);
+    const bats  = DB.filter(r=>r[2]==='Bat');
+    const pms   = DB.filter(r=>r[2]==='PM');
+    const ticketBats = bats.filter(r=>r[5]>0);
+    const ticket = ticketBats.length ? Math.round(ticketBats.reduce((s,r)=>s+r[5],0)/ticketBats.length) : 0;
+
+    // Leader by total
+    const byMec = {};
+    DB.forEach(r=>{ byMec[r[6]]=(byMec[r[6]]||0)+r[5]; });
+    const leader = Object.entries(byMec).sort((a,b)=>b[1]-a[1])[0];
+
+    const el = id => document.getElementById(id);
+    if(el('kpiPeriodo'))  el('kpiPeriodo').textContent  = '$'+totalPeriodo.toLocaleString('es-AR');
+    if(el('kpiBat'))      el('kpiBat').textContent      = bats.length;
+    if(el('kpiPM'))       el('kpiPM').textContent       = pms.length;
+    if(el('kpiLider'))    el('kpiLider').textContent    = leader[0];
+    if(el('kpiLiderSub')) el('kpiLiderSub').textContent = '$'+leader[1].toLocaleString('es-AR')+' periodo';
+    if(el('kpiTicket'))   el('kpiTicket').textContent   = '$'+ticket.toLocaleString('es-AR');
+  }
+
   // Init
   renderCotizaciones();
+  initDemoData();
   setTimeout(drawVentas, 100);
 </script>
 </body>
