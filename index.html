@@ -185,9 +185,139 @@
     .panel { margin: 0 10px 16px; }
     .panel-body { padding: 12px; }
   }
+
+  /* ── LOGIN ──────────────────────────────────────────────────── */
+  .login-wrap { position:fixed;inset:0;background:var(--bg-tertiary);display:flex;align-items:center;justify-content:center;z-index:2000; }
+  .login-box { background:var(--bg-primary);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:400px;margin:16px; }
+  .login-logo { font-size:34px;text-align:center;margin-bottom:12px; }
+  .login-title { font-size:18px;font-weight:700;text-align:center;margin-bottom:4px; }
+  .login-sub { font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:26px; }
+  .login-field { margin-bottom:14px; }
+  .login-field label { display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;font-weight:500; }
+  .login-field input { width:100%; }
+  .login-btn { width:100%;padding:12px;background:var(--text-primary);color:var(--bg-primary);border:none;border-radius:var(--radius-md);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);margin-top:6px;transition:opacity .15s; }
+  .login-btn:hover { opacity:.85; }
+  .login-err { color:var(--text-danger);font-size:12px;text-align:center;margin-top:8px;min-height:18px; }
+  .login-demo { margin-top:20px;padding:12px 14px;background:var(--bg-secondary);border-radius:var(--radius-md); }
+  .login-demo-ttl { font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px; }
+  .login-demo-row { display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);padding:3px 0; }
+  .login-demo-row code { font-family:monospace;color:var(--text-primary);font-size:12px; }
+
+  /* ── MECANICO DASHBOARD ─────────────────────────────────────── */
+  .mec-wrap { min-height:100vh;background:var(--bg-tertiary); }
+  .mec-header { background:var(--bg-primary);border-bottom:0.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100; }
+  .mec-body { padding:16px;max-width:540px;margin:0 auto; }
+  .mec-card { background:var(--bg-primary);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px; }
+  .mec-field { margin-bottom:13px; }
+  .mec-field label { display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;font-weight:500; }
+  .mec-field input, .mec-field select { width:100%; }
+  .mec-submit { width:100%;padding:13px;background:#1d9e75;color:white;border:none;border-radius:var(--radius-md);font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity .15s;margin-top:4px; }
+  .mec-submit:hover { opacity:.88; }
+  .mec-ok { display:none;text-align:center;padding:11px;background:var(--bg-success);border-radius:var(--radius-md);color:var(--text-success);font-weight:600;font-size:13px;margin-bottom:10px; }
 </style>
 </head>
 <body>
+
+<!-- ══════════════════ LOGIN ══════════════════ -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">🔋</div>
+    <div class="login-title">Baterias del Sur</div>
+    <div class="login-sub">Panel de gestión — ingrese sus credenciales</div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input id="loginUser" type="text" placeholder="admin / cristian / tomas…" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-demo">
+      <div class="login-demo-ttl">Accesos de demo</div>
+      <div class="login-demo-row"><span>Admin</span><span><code>admin</code> / <code>admin123</code></span></div>
+      <div class="login-demo-row"><span>Mecanico</span><span><code>cristian</code> / <code>1234</code></span></div>
+      <div class="login-demo-row"><span>Mecanico</span><span><code>tomas</code> / <code>1234</code></span></div>
+      <div class="login-demo-row"><span>Mecanico</span><span><code>santi</code> / <code>1234</code></span></div>
+      <div class="login-demo-row"><span>Mecanico</span><span><code>juan</code> / <code>1234</code></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MECANICO DASH ══════════════════ -->
+<div id="mecDash" style="display:none">
+  <div class="mec-wrap">
+    <div class="mec-header">
+      <div>
+        <div style="font-size:15px;font-weight:700">🔋 Baterias del Sur</div>
+        <div id="mecSubtitle" style="font-size:12px;color:var(--text-secondary);margin-top:2px"></div>
+      </div>
+      <button class="btn-outline" onclick="logout()" style="font-size:12px">Salir</button>
+    </div>
+    <div class="mec-body">
+      <div id="mecOk" class="mec-ok">✓ Servicio registrado correctamente</div>
+      <div class="mec-card">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Registrar servicio</div>
+        <div class="mec-field">
+          <label>Expediente</label>
+          <input id="mExp" type="text" placeholder="Nro. expediente (opcional)">
+        </div>
+        <div class="mec-field">
+          <label>Vehiculo *</label>
+          <input id="mVeh" type="text" placeholder="Ej: Partner, Amarok, Fiat 147…">
+        </div>
+        <div class="mec-field">
+          <label>Direccion</label>
+          <input id="mDir" type="text" placeholder="Calle y nro. donde fue el servicio">
+        </div>
+        <div class="mec-field">
+          <label>Tipo de servicio</label>
+          <select id="mServ" onchange="mecServChange()">
+            <option value="Bat">Bat — Colocacion bateria</option>
+            <option value="PM">PM — Puesta en marcha</option>
+            <option value="Diag">Diag — Diagnostico</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="mec-field" id="mModeloField">
+          <label>Modelo bateria</label>
+          <input id="mMod" type="text" placeholder="Ej: 60HD, 75 Max, F50GD…">
+        </div>
+        <div class="mec-field">
+          <label>Forma de pago</label>
+          <select id="mPago">
+            <option value="">Sin cobro</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Debito">Debito</option>
+            <option value="Credito 1">Credito — 1 cuota</option>
+            <option value="Credito 3">Credito — 3 cuotas</option>
+            <option value="Credito 6">Credito — 6 cuotas</option>
+            <option value="Cta. cte.">Cuenta corriente</option>
+          </select>
+        </div>
+        <div class="mec-field">
+          <label>Importe cobrado ($)</label>
+          <input id="mImp" type="number" value="0" min="0" step="100">
+        </div>
+        <div class="mec-field">
+          <label>Observaciones</label>
+          <input id="mObs" type="text" placeholder="Notas adicionales (opcional)">
+        </div>
+        <button class="mec-submit" onclick="mecSubmit()">Registrar servicio</button>
+      </div>
+
+      <div class="mec-card">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Mis registros de hoy</div>
+        <div id="mecTodayList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ ADMIN DASH ══════════════════ -->
+<div id="adminDash" style="display:none">
 
 <div class="topbar">
   <div>
@@ -196,7 +326,8 @@
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <span class="badge bg">Sistema activo</span>
-    <span style="font-size:12px;color:var(--text-secondary)">Usuario: Admin</span>
+    <span style="font-size:12px;color:var(--text-secondary)">Usuario: <span id="topUser">Admin</span></span>
+    <button class="btn-outline" onclick="logout()" style="font-size:12px;padding:5px 11px">Salir</button>
   </div>
 </div>
 
@@ -869,12 +1000,12 @@
   </div>
 </div>
 
+</div><!-- /adminDash -->
+
 <script>
   // Fecha actual
   const dias = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
   const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const hoy = new Date();
-  document.getElementById('fechaHoy').textContent = `${dias[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]} ${hoy.getFullYear()}`;
 
   // Panel navigation
   function show(id, btn) {
@@ -1534,8 +1665,9 @@
     const serv    = (document.getElementById('vFiltServ')||{}).value||'';
     const fecha   = (document.getElementById('vFiltFecha')||{}).value||'';
 
-    const filtrados = DB.filter(r =>
-      (!buscar || r[2].toLowerCase().includes(buscar) || r[5].toLowerCase().includes(buscar) || r[3].toLowerCase().includes(buscar)) &&
+    const allData = getAllDB();
+    const filtrados = allData.filter(r =>
+      (!buscar || r[2].toLowerCase().includes(buscar) || r[5].toLowerCase().includes(buscar) || (r[3]||'').toLowerCase().includes(buscar)) &&
       (!mec    || r[8] === mec) &&
       (!serv   || r[4] === serv) &&
       (!fecha  || r[0] === fecha)
@@ -1543,28 +1675,28 @@
 
     const total = filtrados.reduce((s,r)=>s+r[7],0);
     let html = '';
-    // Most recent first
-    const reversed = [...filtrados].reverse();
-    reversed.forEach(r => {
-      const [f,exp,v,dir,s,mod,p,i,mec2,obs] = r;
+    [...filtrados].reverse().forEach(r => {
+      const [f,exp,v,dir,s,mod,p,i,mec2,obs,nuevo] = r;
       const imp = i > 0 ? '<strong>$'+i.toLocaleString('es-AR')+'</strong>' : '<span style="color:var(--text-secondary)">—</span>';
-      html += `<tr>
-        <td style="color:var(--text-secondary);white-space:nowrap">${f}</td>
+      const rowStyle = nuevo ? 'background:rgba(29,158,117,0.06);border-left:2px solid #1d9e75;' : '';
+      const nuevoBadge = nuevo ? ' <span class="badge bg" style="font-size:10px;padding:1px 6px">Nuevo</span>' : '';
+      html += `<tr style="${rowStyle}">
+        <td style="color:var(--text-secondary);white-space:nowrap">${f}${nuevoBadge}</td>
         <td style="font-size:11px;color:var(--text-secondary);white-space:nowrap">${exp||'—'}</td>
         <td style="font-weight:500">${v||'—'}</td>
-        <td style="font-size:12px;color:var(--text-secondary);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${dir}">${dir||'—'}</td>
+        <td style="font-size:12px;color:var(--text-secondary);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${dir||''}">${dir||'—'}</td>
         <td>${servBadge(s)}</td>
         <td style="font-size:12px;color:var(--text-secondary)">${mod||'—'}</td>
         <td>${imp}</td>
         <td><span class="badge ${mecColor(mec2)}">${mec2}</span></td>
         <td>${pagoBadge(p)}</td>
-        <td style="font-size:11px;color:var(--text-secondary);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${obs}">${obs||''}</td>
+        <td style="font-size:11px;color:var(--text-secondary);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${obs||''}">${obs||''}</td>
       </tr>`;
     });
     const tbody = document.getElementById('ventasTbody');
     if (tbody) tbody.innerHTML = html;
     const countEl = document.getElementById('ventasCount');
-    if (countEl) countEl.textContent = filtrados.length + ' registros' + (filtrados.length < DB.length ? ' (filtrados de '+DB.length+')' : '');
+    if (countEl) countEl.textContent = filtrados.length + ' registros' + (filtrados.length < allData.length ? ' (filtrados de '+allData.length+')' : '');
     const totalEl = document.getElementById('ventasTotal');
     if (totalEl) totalEl.textContent = '$' + total.toLocaleString('es-AR');
   }
@@ -1572,16 +1704,17 @@
   // ── INIT DEMO DATA (Resumen KPIs) ────────────────────────────────
   // DB cols: [0]fecha [1]expediente [2]vehiculo [3]direccion [4]servicio [5]modelo [6]pago [7]importe [8]mecanico [9]obs
   function initDemoData() {
-    const totalPeriodo = DB.reduce((s,r)=>s+r[7],0);
-    const bats  = DB.filter(r=>r[4]==='Bat');
-    const pms   = DB.filter(r=>r[4]==='PM');
+    const allData = getAllDB();
+    const totalPeriodo = allData.reduce((s,r)=>s+r[7],0);
+    const bats  = allData.filter(r=>r[4]==='Bat');
+    const pms   = allData.filter(r=>r[4]==='PM');
     const ticketBats = bats.filter(r=>r[7]>0);
     const ticket = ticketBats.length ? Math.round(ticketBats.reduce((s,r)=>s+r[7],0)/ticketBats.length) : 0;
 
     // Leader by total
     const byMec = {};
-    DB.forEach(r=>{ byMec[r[8]]=(byMec[r[8]]||0)+r[7]; });
-    const leader = Object.entries(byMec).sort((a,b)=>b[1]-a[1])[0];
+    allData.forEach(r=>{ byMec[r[8]]=(byMec[r[8]]||0)+r[7]; });
+    const leader = Object.entries(byMec).filter(([m])=>m).sort((a,b)=>b[1]-a[1])[0];
 
     const el = id => document.getElementById(id);
     if(el('kpiPeriodo'))  el('kpiPeriodo').textContent  = '$'+totalPeriodo.toLocaleString('es-AR');
@@ -1878,13 +2011,179 @@
     `;
   }
 
-  // Init
-  renderCotizaciones();
-  initDemoData();
-  renderStock('Willard');
-  setTimeout(drawVentas, 100);
-  // Pre-compute panels so they're ready when tabs are opened
-  setTimeout(() => { initCaja(''); initReportes(); initProveedores(); initRent(); }, 200);
+  // ── AUTH & STORAGE ───────────────────────────────────────────────
+  const USERS = {
+    admin:    { pass: 'admin123', role: 'admin',    nombre: 'Admin' },
+    cristian: { pass: '1234',     role: 'mecanico', nombre: 'Cristian' },
+    tomas:    { pass: '1234',     role: 'mecanico', nombre: 'Tomas' },
+    santi:    { pass: '1234',     role: 'mecanico', nombre: 'Santi' },
+    juan:     { pass: '1234',     role: 'mecanico', nombre: 'Juan Manuel' },
+  };
+  const SESS_KEY = 'bds_session';
+  const RECS_KEY = 'bds_records';
+  function getSession()   { try { return JSON.parse(localStorage.getItem(SESS_KEY)); } catch { return null; } }
+  function saveSession(s) { localStorage.setItem(SESS_KEY, JSON.stringify(s)); }
+  function clearSession() { localStorage.removeItem(SESS_KEY); }
+  function getPendingRecs()   { try { return JSON.parse(localStorage.getItem(RECS_KEY)) || []; } catch { return []; } }
+  function addPendingRec(rec) { const a = getPendingRecs(); a.push(rec); localStorage.setItem(RECS_KEY, JSON.stringify(a)); }
+  function getAllDB() {
+    const pending = getPendingRecs();
+    const pendingRows = pending.map(r => [
+      r.fecha, r.expediente||'', r.vehiculo, r.direccion||'',
+      r.servicio, r.modelo||'', r.pago||'', r.importe||0,
+      r.mecanico, r.obs||'', true
+    ]);
+    return [...DB, ...pendingRows];
+  }
+
+  // ── LOGIN FLOW ───────────────────────────────────────────────────
+  function doLogin() {
+    const u = (document.getElementById('loginUser').value||'').toLowerCase().trim();
+    const p = document.getElementById('loginPass').value||'';
+    const user = USERS[u];
+    if (!user || user.pass !== p) {
+      document.getElementById('loginErr').textContent = 'Usuario o contraseña incorrectos';
+      return;
+    }
+    document.getElementById('loginErr').textContent = '';
+    const sess = { user: u, role: user.role, nombre: user.nombre };
+    saveSession(sess);
+    applySession(sess);
+  }
+
+  function logout() {
+    clearSession();
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminDash').style.display   = 'none';
+    document.getElementById('mecDash').style.display     = 'none';
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginErr').textContent = '';
+  }
+
+  function applySession(sess) {
+    document.getElementById('loginScreen').style.display = 'none';
+    if (sess.role === 'admin') {
+      document.getElementById('adminDash').style.display = 'block';
+      document.getElementById('mecDash').style.display   = 'none';
+      document.getElementById('topUser').textContent = sess.nombre;
+      initAdminDash();
+    } else {
+      document.getElementById('adminDash').style.display = 'none';
+      document.getElementById('mecDash').style.display   = 'block';
+      initMecDash(sess);
+    }
+  }
+
+  function initAdminDash() {
+    const _h = new Date();
+    const fechaEl = document.getElementById('fechaHoy');
+    if (fechaEl) fechaEl.textContent = `${dias[_h.getDay()]} ${_h.getDate()} de ${meses[_h.getMonth()]} ${_h.getFullYear()}`;
+    renderCotizaciones();
+    initDemoData();
+    renderStock('Willard');
+    updatePendingBadge();
+    setTimeout(drawVentas, 100);
+    setTimeout(() => { initCaja(''); initReportes(); initProveedores(); initRent(); }, 200);
+  }
+
+  // ── MECANICO FORM ────────────────────────────────────────────────
+  function initMecDash(sess) {
+    const h = new Date();
+    const diaStr = dias[h.getDay()] + ' ' + h.getDate() + ' de ' + meses[h.getMonth()];
+    document.getElementById('mecSubtitle').textContent = 'Hola, ' + sess.nombre + ' · ' + diaStr;
+    mecServChange();
+    renderMecToday(sess.nombre);
+  }
+
+  function mecServChange() {
+    const s = document.getElementById('mServ').value;
+    document.getElementById('mModeloField').style.display = s === 'Bat' ? '' : 'none';
+  }
+
+  function mecSubmit() {
+    const sess = getSession();
+    if (!sess) return;
+    const veh = (document.getElementById('mVeh').value||'').trim();
+    if (!veh) { document.getElementById('mVeh').focus(); return; }
+    const h = new Date();
+    const fecha = String(h.getDate()).padStart(2,'0') + '/' + String(h.getMonth()+1).padStart(2,'0');
+    const rec = {
+      id: Date.now(), timestamp: h.toISOString(), fecha,
+      expediente: (document.getElementById('mExp').value||'').trim(),
+      vehiculo: veh,
+      direccion: (document.getElementById('mDir').value||'').trim(),
+      servicio: document.getElementById('mServ').value,
+      modelo: (document.getElementById('mMod').value||'').trim(),
+      pago: document.getElementById('mPago').value,
+      importe: parseFloat(document.getElementById('mImp').value)||0,
+      mecanico: sess.nombre,
+      obs: (document.getElementById('mObs').value||'').trim(),
+      nuevo: true,
+    };
+    addPendingRec(rec);
+    ['mExp','mVeh','mDir','mMod','mObs'].forEach(id => { document.getElementById(id).value=''; });
+    document.getElementById('mImp').value = '0';
+    document.getElementById('mPago').value = '';
+    const ok = document.getElementById('mecOk');
+    ok.style.display = 'block';
+    setTimeout(() => { ok.style.display = 'none'; }, 2500);
+    renderMecToday(sess.nombre);
+  }
+
+  function renderMecToday(mecNombre) {
+    const h = new Date();
+    const fecha = String(h.getDate()).padStart(2,'0') + '/' + String(h.getMonth()+1).padStart(2,'0');
+    const list = getPendingRecs().filter(r => r.mecanico === mecNombre && r.fecha === fecha);
+    const el = document.getElementById('mecTodayList');
+    if (!el) return;
+    if (!list.length) {
+      el.innerHTML = '<div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:16px 0">Sin registros aun</div>';
+      return;
+    }
+    el.innerHTML = [...list].reverse().map(r => `
+      <div style="padding:10px 0;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:600">${r.vehiculo} · <span style="font-weight:400">${r.servicio==='Bat'&&r.modelo?r.modelo:r.servicio}</span></div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${r.direccion||'—'} · ${r.pago||'Sin cobro'}</div>
+          ${r.obs ? `<div style="font-size:11px;color:var(--text-secondary)">${r.obs}</div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:10px">
+          <div style="font-size:14px;font-weight:600;color:var(--text-success)">${r.importe>0?fmt$(r.importe):'—'}</div>
+          <div style="font-size:10px;color:var(--text-secondary)">${new Date(r.timestamp).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updatePendingBadge() {
+    const n = getPendingRecs().filter(r=>r.nuevo).length;
+    const ventasTab = document.querySelector('#adminDash .ntab[onclick*="ventas"]');
+    if (!ventasTab) return;
+    if (n > 0) {
+      ventasTab.innerHTML = `Ventas <span style="background:#e24b4a;color:white;border-radius:999px;padding:1px 6px;font-size:10px;margin-left:2px;font-weight:700">${n}</span>`;
+    } else {
+      ventasTab.textContent = 'Ventas';
+    }
+  }
+
+  window.addEventListener('storage', e => {
+    if (e.key === RECS_KEY) {
+      const sess = getSession();
+      if (sess && sess.role === 'admin') {
+        updatePendingBadge();
+        const vp = document.getElementById('p-ventas');
+        if (vp && vp.classList.contains('active')) renderVentas();
+      }
+    }
+  });
+
+  // ── APP INIT ─────────────────────────────────────────────────────
+  const _initSess = getSession();
+  if (_initSess) {
+    applySession(_initSess);
+  }
+  // else login screen is shown by default (no display:none)
 </script>
 </body>
 </html>
