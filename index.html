@@ -2173,6 +2173,9 @@
 
   function logout() {
     clearSession();
+    currentRole = null;
+    // Reset DOM state so next login starts clean
+    document.querySelectorAll('#adminDash .ntab').forEach(btn => btn.style.display = '');
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('adminDash').style.display   = 'none';
     document.getElementById('mecDash').style.display     = 'none';
@@ -2202,6 +2205,14 @@
   }
 
   function initAdminDash() {
+    // Restore full layout (in case a restricted session ran before)
+    document.querySelectorAll('#adminDash .ntab').forEach(btn => btn.style.display = '');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('#adminDash .ntab').forEach(b => b.classList.remove('active'));
+    document.getElementById('p-resumen').classList.add('active');
+    const resBtn = document.querySelector('#adminDash .ntab[onclick*="resumen"]');
+    if (resBtn) resBtn.classList.add('active');
+
     const _h = new Date();
     const fechaEl = document.getElementById('fechaHoy');
     if (fechaEl) fechaEl.textContent = `${dias[_h.getDay()]} ${_h.getDate()} de ${meses[_h.getMonth()]} ${_h.getFullYear()}`;
@@ -2218,10 +2229,8 @@
   const ADMIN_VENTAS_TABS = ['ventas','garantias','clientes','logistica','afip'];
 
   function initAdminVentas() {
-    const _h = new Date();
-    const fechaEl = document.getElementById('fechaHoy');
-    if (fechaEl) fechaEl.textContent = `${dias[_h.getDay()]} ${_h.getDate()} de ${meses[_h.getMonth()]} ${_h.getFullYear()}`;
-    // Hide tabs not allowed for this role
+    // First restore all tabs, then hide the ones not allowed
+    document.querySelectorAll('#adminDash .ntab').forEach(btn => btn.style.display = '');
     document.querySelectorAll('#adminDash .ntab').forEach(btn => {
       const m = (btn.getAttribute('onclick')||'').match(/show\('(\w+)'/);
       if (!m || !ADMIN_VENTAS_TABS.includes(m[1])) btn.style.display = 'none';
@@ -2232,6 +2241,9 @@
     document.getElementById('p-ventas').classList.add('active');
     const ventasBtn = document.querySelector('#adminDash .ntab[onclick*="ventas"]');
     if (ventasBtn) ventasBtn.classList.add('active');
+    const _h = new Date();
+    const fechaEl = document.getElementById('fechaHoy');
+    if (fechaEl) fechaEl.textContent = `${dias[_h.getDay()]} ${_h.getDate()} de ${meses[_h.getMonth()]} ${_h.getFullYear()}`;
     applyRoleRestrictions();
     updatePendingBadge();
     renderVentas();
