@@ -241,6 +241,7 @@
       <div class="login-demo-row"><span>Mecanico</span><span><code>tomas</code> / <code>1234</code></span></div>
       <div class="login-demo-row"><span>Mecanico</span><span><code>santi</code> / <code>1234</code></span></div>
       <div class="login-demo-row"><span>Mecanico</span><span><code>juan</code> / <code>1234</code></span></div>
+      <div class="login-demo-row"><span>Administracion</span><span><code>priscila</code> / <code>1234</code></span></div>
     </div>
   </div>
 </div>
@@ -260,7 +261,13 @@
       <div class="mec-card">
         <div style="font-size:13px;font-weight:600;margin-bottom:14px">Registrar servicio</div>
         <div class="mec-field">
-          <label>Expediente</label>
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            Expediente
+            <label style="display:flex;align-items:center;gap:5px;font-weight:400;font-size:11px;cursor:pointer;color:var(--text-secondary)">
+              <input type="checkbox" id="mExpCheck" onchange="mecExpCheck()" style="width:auto;border:none;background:none;padding:0;accent-color:#1d9e75">
+              Particular / No aplica
+            </label>
+          </label>
           <input id="mExp" type="text" placeholder="Nro. expediente (opcional)">
         </div>
         <div class="mec-field">
@@ -452,7 +459,7 @@
     </div>
     <div style="overflow-x:auto">
     <table>
-      <tr><th>Fecha</th><th>Exp.</th><th>Vehiculo</th><th>Direccion</th><th>Servicio</th><th>Modelo bat.</th><th>Importe</th><th>Mecanico</th><th>Pago</th><th>Obs</th></tr>
+      <tr><th>Fecha</th><th>Exp.</th><th>Vehiculo</th><th>Direccion</th><th>Servicio</th><th>Modelo bat.</th><th>Importe</th><th>Mecanico</th><th>Pago</th><th>Obs</th><th></th></tr>
       <tbody id="ventasTbody"></tbody>
     </table>
     </div>
@@ -647,6 +654,29 @@
       <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;min-width:170px">Corrosion bornes</span><div class="pbar" style="flex:1"><div class="pbf" style="width:18%;background:#888780"></div></div><span style="font-size:12px;color:var(--text-secondary)">18%</span></div>
       <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;min-width:170px">Otros</span><div class="pbar" style="flex:1"><div class="pbf" style="width:12%;background:#d3d1c7"></div></div><span style="font-size:12px;color:var(--text-secondary)">12%</span></div>
     </div>
+
+    <!-- PRESTAMOS DE BATERIA -->
+    <div style="margin-top:24px;padding-top:18px;border-top:0.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="st" style="margin-bottom:0">Baterias en prestamo (mientras dura la garantia)</div>
+        <button class="btn" onclick="showLoanForm()">+ Registrar prestamo</button>
+      </div>
+      <div id="loanFormArea" style="display:none;background:var(--bg-secondary);border-radius:var(--radius-md);padding:14px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Cliente *</label><input id="lCliente" style="width:100%" placeholder="Nombre del cliente"></div>
+          <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Bateria prestada *</label><input id="lBat" style="width:100%" placeholder="Modelo / marca de la bateria"></div>
+          <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Fecha de prestamo</label><input id="lFecha" type="date" style="width:100%"></div>
+          <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Devolucion estimada</label><input id="lDevolucion" type="date" style="width:100%"></div>
+          <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">N° Garantia ref.</label><input id="lRef" style="width:100%" placeholder="Ej: #G-022"></div>
+          <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Motivo</label><input id="lMotivo" style="width:100%" placeholder="Ej: No carga, sulfatacion..."></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn-outline" onclick="document.getElementById('loanFormArea').style.display='none'">Cancelar</button>
+          <button class="btn" onclick="addLoan()">Registrar prestamo</button>
+        </div>
+      </div>
+      <div id="loanList"></div>
+    </div>
   </div>
 </div>
 
@@ -788,8 +818,8 @@
     <div class="mgrid">
       <div class="met"><div class="ml">Emitidas hoy</div><div class="mv">2</div></div>
       <div class="met"><div class="ml">Pendientes</div><div class="mv warn">2</div><div class="md dn">sin emitir</div></div>
-      <div class="met"><div class="ml">Facturado este mes</div><div class="mv">$3.240.000</div></div>
-      <div class="met"><div class="ml">IVA debito fiscal</div><div class="mv">$681.176</div></div>
+      <div class="met admin-only-vis"><div class="ml">Facturado este mes</div><div class="mv">$3.240.000</div></div>
+      <div class="met admin-only-vis"><div class="ml">IVA debito fiscal</div><div class="mv">$681.176</div></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div class="st" style="margin-bottom:0">Comprobantes del dia</div>
@@ -997,6 +1027,63 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:3000;align-items:center;justify-content:center">
+  <div style="background:var(--bg-primary);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:540px;margin:16px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:14px;font-weight:700">Editar servicio</div>
+      <button onclick="closeEditModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-secondary);line-height:1">✕</button>
+    </div>
+    <input type="hidden" id="editRowId">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Fecha</label><input id="editFecha" style="width:100%" placeholder="DD/MM"></div>
+      <div>
+        <label style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          Expediente
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-weight:400">
+            <input type="checkbox" id="editExpCheck" onchange="editExpCheck()" style="width:auto;border:none;background:none;padding:0;accent-color:#1d9e75"> Particular
+          </label>
+        </label>
+        <input id="editExp" style="width:100%" placeholder="Expediente o Particular">
+      </div>
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Vehiculo</label><input id="editVeh" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Direccion</label><input id="editDir" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Servicio</label>
+        <select id="editServ" style="width:100%">
+          <option value="Bat">Bat — Colocacion bateria</option>
+          <option value="PM">PM — Puesta en marcha</option>
+          <option value="Neu">Neu — Neumatico</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Modelo bat.</label><input id="editMod" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Forma de pago</label>
+        <select id="editPago" style="width:100%">
+          <option value="">Sin cobro</option>
+          <option value="Efectivo">Efectivo</option>
+          <option value="Transferencia">Transferencia</option>
+          <option value="Debito">Debito</option>
+          <option value="1 Cuota">Credito — 1 cuota</option>
+          <option value="3 Cuotas">Credito — 3 cuotas</option>
+          <option value="6 Cuotas">Credito — 6 cuotas</option>
+          <option value="Cta. cte.">Cuenta corriente</option>
+        </select>
+      </div>
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Importe ($)</label><input id="editImp" type="number" style="width:100%" min="0" step="100"></div>
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Mecanico</label>
+        <select id="editMec" style="width:100%">
+          <option>Cristian</option><option>Tomas</option><option>Santi</option><option>Juan Manuel</option>
+        </select>
+      </div>
+      <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">Observaciones</label><input id="editObs" style="width:100%"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:8px;border-top:0.5px solid var(--border)">
+      <button class="btn-outline" onclick="closeEditModal()">Cancelar</button>
+      <button class="login-btn" style="width:auto;padding:9px 22px;margin:0" onclick="saveEditModal()">Guardar cambios</button>
+    </div>
   </div>
 </div>
 
@@ -1675,11 +1762,13 @@
 
     const total = filtrados.reduce((s,r)=>s+r[7],0);
     let html = '';
+    const canEdit = currentRole === 'admin' || currentRole === 'admin_ventas';
     [...filtrados].reverse().forEach(r => {
-      const [f,exp,v,dir,s,mod,p,i,mec2,obs,nuevo] = r;
+      const [f,exp,v,dir,s,mod,p,i,mec2,obs,nuevo,rowId] = r;
       const imp = i > 0 ? '<strong>$'+i.toLocaleString('es-AR')+'</strong>' : '<span style="color:var(--text-secondary)">—</span>';
       const rowStyle = nuevo ? 'background:rgba(29,158,117,0.06);border-left:2px solid #1d9e75;' : '';
       const nuevoBadge = nuevo ? ' <span class="badge bg" style="font-size:10px;padding:1px 6px">Nuevo</span>' : '';
+      const editBtn = canEdit ? `<button onclick="openEditModal('${rowId}',${JSON.stringify([f,exp,v,dir,s,mod,p,i,mec2,obs]).replace(/'/g,"&#39;")})" style="font-size:11px;padding:3px 8px;border-radius:6px;border:0.5px solid var(--border-md);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;white-space:nowrap">Editar</button>` : '';
       html += `<tr style="${rowStyle}">
         <td style="color:var(--text-secondary);white-space:nowrap">${f}${nuevoBadge}</td>
         <td style="font-size:11px;color:var(--text-secondary);white-space:nowrap">${exp||'—'}</td>
@@ -1691,6 +1780,7 @@
         <td><span class="badge ${mecColor(mec2)}">${mec2}</span></td>
         <td>${pagoBadge(p)}</td>
         <td style="font-size:11px;color:var(--text-secondary);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${obs||''}">${obs||''}</td>
+        <td>${editBtn}</td>
       </tr>`;
     });
     const tbody = document.getElementById('ventasTbody');
@@ -2012,12 +2102,14 @@
   }
 
   // ── AUTH & STORAGE ───────────────────────────────────────────────
+  let currentRole = null;
   const USERS = {
-    admin:    { pass: 'admin123', role: 'admin',    nombre: 'Admin' },
-    cristian: { pass: '1234',     role: 'mecanico', nombre: 'Cristian' },
-    tomas:    { pass: '1234',     role: 'mecanico', nombre: 'Tomas' },
-    santi:    { pass: '1234',     role: 'mecanico', nombre: 'Santi' },
-    juan:     { pass: '1234',     role: 'mecanico', nombre: 'Juan Manuel' },
+    admin:    { pass: 'admin123',   role: 'admin',        nombre: 'Admin' },
+    cristian: { pass: '1234',       role: 'mecanico',     nombre: 'Cristian' },
+    tomas:    { pass: '1234',       role: 'mecanico',     nombre: 'Tomas' },
+    santi:    { pass: '1234',       role: 'mecanico',     nombre: 'Santi' },
+    juan:     { pass: '1234',       role: 'mecanico',     nombre: 'Juan Manuel' },
+    priscila: { pass: '1234',       role: 'admin_ventas', nombre: 'Priscila' },
   };
   const SESS_KEY = 'bds_session';
   const RECS_KEY = 'bds_records';
@@ -2026,14 +2118,42 @@
   function clearSession() { localStorage.removeItem(SESS_KEY); }
   function getPendingRecs()   { try { return JSON.parse(localStorage.getItem(RECS_KEY)) || []; } catch { return []; } }
   function addPendingRec(rec) { const a = getPendingRecs(); a.push(rec); localStorage.setItem(RECS_KEY, JSON.stringify(a)); }
+
+  const EDITS_KEY = 'bds_edits';
+  function getEdits()             { try { return JSON.parse(localStorage.getItem(EDITS_KEY)) || {}; } catch { return {}; } }
+  function saveRowEdit(rowId, e)  { const edits = getEdits(); edits[rowId] = e; localStorage.setItem(EDITS_KEY, JSON.stringify(edits)); }
+
+  function mergeEdit(base, e) {
+    // e is an object with fields to override
+    return [
+      e.fecha      !== undefined ? e.fecha      : base[0],
+      e.expediente !== undefined ? e.expediente : base[1],
+      e.vehiculo   !== undefined ? e.vehiculo   : base[2],
+      e.direccion  !== undefined ? e.direccion  : base[3],
+      e.servicio   !== undefined ? e.servicio   : base[4],
+      e.modelo     !== undefined ? e.modelo     : base[5],
+      e.pago       !== undefined ? e.pago       : base[6],
+      e.importe    !== undefined ? parseFloat(e.importe)||0 : base[7],
+      e.mecanico   !== undefined ? e.mecanico   : base[8],
+      e.obs        !== undefined ? e.obs        : base[9],
+    ];
+  }
+
   function getAllDB() {
     const pending = getPendingRecs();
-    const pendingRows = pending.map(r => [
-      r.fecha, r.expediente||'', r.vehiculo, r.direccion||'',
-      r.servicio, r.modelo||'', r.pago||'', r.importe||0,
-      r.mecanico, r.obs||'', true
-    ]);
-    return [...DB, ...pendingRows];
+    const edits   = getEdits();
+    const staticRows = DB.map((r, i) => {
+      const rowId = 'db_' + i;
+      const base  = edits[rowId] ? mergeEdit(r, edits[rowId]) : [...r];
+      return [...base, false, rowId]; // [0-9]=data, [10]=nuevo, [11]=rowId
+    });
+    const pendingRows = pending.map(r => {
+      const rowId = 'pend_' + r.id;
+      const base  = [r.fecha, r.expediente||'', r.vehiculo, r.direccion||'', r.servicio, r.modelo||'', r.pago||'', r.importe||0, r.mecanico, r.obs||''];
+      const final = edits[rowId] ? mergeEdit(base, edits[rowId]) : base;
+      return [...final, true, rowId];
+    });
+    return [...staticRows, ...pendingRows];
   }
 
   // ── LOGIN FLOW ───────────────────────────────────────────────────
@@ -2062,12 +2182,18 @@
   }
 
   function applySession(sess) {
+    currentRole = sess.role;
     document.getElementById('loginScreen').style.display = 'none';
     if (sess.role === 'admin') {
       document.getElementById('adminDash').style.display = 'block';
       document.getElementById('mecDash').style.display   = 'none';
       document.getElementById('topUser').textContent = sess.nombre;
       initAdminDash();
+    } else if (sess.role === 'admin_ventas') {
+      document.getElementById('adminDash').style.display = 'block';
+      document.getElementById('mecDash').style.display   = 'none';
+      document.getElementById('topUser').textContent = sess.nombre;
+      initAdminVentas();
     } else {
       document.getElementById('adminDash').style.display = 'none';
       document.getElementById('mecDash').style.display   = 'block';
@@ -2079,12 +2205,44 @@
     const _h = new Date();
     const fechaEl = document.getElementById('fechaHoy');
     if (fechaEl) fechaEl.textContent = `${dias[_h.getDay()]} ${_h.getDate()} de ${meses[_h.getMonth()]} ${_h.getFullYear()}`;
+    applyRoleRestrictions();
     renderCotizaciones();
     initDemoData();
     renderStock('Willard');
     updatePendingBadge();
+    renderLoans();
     setTimeout(drawVentas, 100);
     setTimeout(() => { initCaja(''); initReportes(); initProveedores(); initRent(); }, 200);
+  }
+
+  const ADMIN_VENTAS_TABS = ['ventas','garantias','clientes','logistica','afip'];
+
+  function initAdminVentas() {
+    const _h = new Date();
+    const fechaEl = document.getElementById('fechaHoy');
+    if (fechaEl) fechaEl.textContent = `${dias[_h.getDay()]} ${_h.getDate()} de ${meses[_h.getMonth()]} ${_h.getFullYear()}`;
+    // Hide tabs not allowed for this role
+    document.querySelectorAll('#adminDash .ntab').forEach(btn => {
+      const m = (btn.getAttribute('onclick')||'').match(/show\('(\w+)'/);
+      if (!m || !ADMIN_VENTAS_TABS.includes(m[1])) btn.style.display = 'none';
+    });
+    // Navigate to Ventas by default
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('#adminDash .ntab').forEach(b => b.classList.remove('active'));
+    document.getElementById('p-ventas').classList.add('active');
+    const ventasBtn = document.querySelector('#adminDash .ntab[onclick*="ventas"]');
+    if (ventasBtn) ventasBtn.classList.add('active');
+    applyRoleRestrictions();
+    updatePendingBadge();
+    renderVentas();
+    renderLoans();
+  }
+
+  function applyRoleRestrictions() {
+    const isFullAdmin = currentRole === 'admin';
+    document.querySelectorAll('.admin-only-vis').forEach(el => {
+      el.style.display = isFullAdmin ? '' : 'none';
+    });
   }
 
   // ── MECANICO FORM ────────────────────────────────────────────────
@@ -2177,6 +2335,150 @@
       }
     }
   });
+
+  // ── EDIT MODAL ──────────────────────────────────────────────────
+  function openEditModal(rowId, data) {
+    const [f,exp,v,dir,s,mod,p,i,mec2,obs] = data;
+    document.getElementById('editRowId').value  = rowId;
+    document.getElementById('editFecha').value  = f||'';
+    document.getElementById('editExp').value    = exp||'';
+    document.getElementById('editVeh').value    = v||'';
+    document.getElementById('editDir').value    = dir||'';
+    document.getElementById('editServ').value   = s||'Bat';
+    document.getElementById('editMod').value    = mod||'';
+    document.getElementById('editPago').value   = p||'';
+    document.getElementById('editImp').value    = i||0;
+    document.getElementById('editMec').value    = mec2||'Cristian';
+    document.getElementById('editObs').value    = obs||'';
+    const isParticular = exp === 'Particular' || exp === 'No aplica';
+    document.getElementById('editExpCheck').checked = isParticular;
+    if (isParticular) { document.getElementById('editExp').disabled = true; document.getElementById('editExp').style.opacity='0.5'; }
+    document.getElementById('editModal').style.display = 'flex';
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+    document.getElementById('editExpCheck').checked = false;
+    document.getElementById('editExp').disabled = false;
+    document.getElementById('editExp').style.opacity = '';
+  }
+
+  function saveEditModal() {
+    const rowId = document.getElementById('editRowId').value;
+    const e = {
+      fecha:      document.getElementById('editFecha').value.trim(),
+      expediente: document.getElementById('editExp').value.trim(),
+      vehiculo:   document.getElementById('editVeh').value.trim(),
+      direccion:  document.getElementById('editDir').value.trim(),
+      servicio:   document.getElementById('editServ').value,
+      modelo:     document.getElementById('editMod').value.trim(),
+      pago:       document.getElementById('editPago').value,
+      importe:    parseFloat(document.getElementById('editImp').value)||0,
+      mecanico:   document.getElementById('editMec').value,
+      obs:        document.getElementById('editObs').value.trim(),
+    };
+    saveRowEdit(rowId, e);
+    closeEditModal();
+    renderVentas();
+  }
+
+  function editExpCheck() {
+    const cb  = document.getElementById('editExpCheck');
+    const inp = document.getElementById('editExp');
+    if (cb.checked) { inp.value = 'Particular'; inp.disabled = true; inp.style.opacity = '0.5'; }
+    else            { inp.value = ''; inp.disabled = false; inp.style.opacity = ''; }
+  }
+
+  // ── EXPEDIENTE CHECKBOX (mec form) ──────────────────────────────
+  function mecExpCheck() {
+    const cb  = document.getElementById('mExpCheck');
+    const inp = document.getElementById('mExp');
+    if (cb.checked) { inp.value = 'Particular'; inp.disabled = true; inp.style.opacity = '0.5'; }
+    else            { inp.value = ''; inp.disabled = false; inp.style.opacity = ''; }
+  }
+
+  // ── LOAN TRACKING (Garantias — baterias en prestamo) ──────────
+  const LOANS_KEY = 'bds_loans';
+  function getLoans()     { try { return JSON.parse(localStorage.getItem(LOANS_KEY)) || []; } catch { return []; } }
+  function saveLoans(arr) { localStorage.setItem(LOANS_KEY, JSON.stringify(arr)); }
+
+  function showLoanForm() {
+    const f = document.getElementById('loanFormArea');
+    f.style.display = f.style.display === 'none' ? '' : 'none';
+    // Set today as default date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('lFecha').value = today;
+  }
+
+  function addLoan() {
+    const cliente = (document.getElementById('lCliente').value||'').trim();
+    const bat     = (document.getElementById('lBat').value||'').trim();
+    if (!cliente || !bat) { alert('Cliente y bateria son obligatorios'); return; }
+    const loan = {
+      id:          Date.now(),
+      cliente,
+      bateria:     bat,
+      fecha:       document.getElementById('lFecha').value,
+      devolucion:  document.getElementById('lDevolucion').value,
+      ref:         (document.getElementById('lRef').value||'').trim(),
+      motivo:      (document.getElementById('lMotivo').value||'').trim(),
+      estado:      'prestada',
+    };
+    const loans = getLoans();
+    loans.push(loan);
+    saveLoans(loans);
+    ['lCliente','lBat','lRef','lMotivo'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('loanFormArea').style.display = 'none';
+    renderLoans();
+  }
+
+  function returnLoan(id) {
+    const loans = getLoans().map(l => l.id === id ? {...l, estado:'devuelta', fechaDevReal: new Date().toISOString().split('T')[0]} : l);
+    saveLoans(loans);
+    renderLoans();
+  }
+
+  function renderLoans() {
+    const el = document.getElementById('loanList');
+    if (!el) return;
+    const loans = getLoans();
+    if (!loans.length) {
+      el.innerHTML = '<div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:14px 0">Sin baterias en prestamo registradas</div>';
+      return;
+    }
+    const activas   = loans.filter(l => l.estado === 'prestada');
+    const devueltas = loans.filter(l => l.estado === 'devuelta');
+    const today = new Date().toISOString().split('T')[0];
+
+    let html = '';
+    if (activas.length) {
+      html += `<div style="overflow-x:auto"><table>
+        <tr><th>Cliente</th><th>Bateria prestada</th><th>Fecha prestamo</th><th>Dev. estimada</th><th>Garantia ref.</th><th>Motivo</th><th>Estado</th><th></th></tr>`;
+      activas.forEach(l => {
+        const vencida = l.devolucion && l.devolucion < today;
+        const estadoBadge = vencida ? '<span class="badge br">Vencida</span>' : '<span class="badge ba">En prestamo</span>';
+        html += `<tr>
+          <td style="font-weight:500">${l.cliente}</td>
+          <td>${l.bateria}</td>
+          <td style="font-size:12px;color:var(--text-secondary)">${l.fecha||'—'}</td>
+          <td style="font-size:12px;color:${vencida?'var(--text-danger)':'var(--text-secondary)'};font-weight:${vencida?'600':'400'}">${l.devolucion||'—'}</td>
+          <td style="font-size:12px;color:var(--text-secondary)">${l.ref||'—'}</td>
+          <td style="font-size:12px;color:var(--text-secondary)">${l.motivo||'—'}</td>
+          <td>${estadoBadge}</td>
+          <td><button onclick="returnLoan(${l.id})" style="font-size:11px;padding:3px 8px;border-radius:6px;border:0.5px solid var(--border-md);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer">Devuelta</button></td>
+        </tr>`;
+      });
+      html += '</table></div>';
+    }
+    if (devueltas.length) {
+      html += `<div style="margin-top:14px"><div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Historial devueltas (${devueltas.length})</div>`;
+      devueltas.slice(-5).reverse().forEach(l => {
+        html += `<div style="font-size:12px;color:var(--text-secondary);padding:5px 0;border-bottom:0.5px solid var(--border)">${l.cliente} — ${l.bateria} — devuelta ${l.fechaDevReal||'—'} <span class="badge bg" style="font-size:10px">Devuelta</span></div>`;
+      });
+      html += '</div>';
+    }
+    el.innerHTML = html;
+  }
 
   // ── APP INIT ─────────────────────────────────────────────────────
   const _initSess = getSession();
